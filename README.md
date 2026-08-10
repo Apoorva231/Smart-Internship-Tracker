@@ -9,7 +9,6 @@ This project is intentionally developed in small, professional increments so eac
 - Build feature by feature.
 - Commit meaningful milestones to GitHub.
 - Keep an engineering log of architectural decisions and tradeoffs.
-- Use the previous Montreal Internship Tracker only as product reference, not as implementation code.
 
 ## Planned Backend Features
 
