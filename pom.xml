@@ -12,7 +12,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.apoorva</groupId>
+    <groupId>com.smartinternshiptracker</groupId>
     <artifactId>smart-internship-tracker</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Smart Internship Tracker</name>
