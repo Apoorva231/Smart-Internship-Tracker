@@ -37,6 +37,25 @@ Tradeoffs:
 - Gradle can be more flexible for large builds.
 - Maven XML is more verbose, but it is explicit and beginner-friendly.
 
+## Decision 003: Manage Schema Changes With Flyway
+
+Date: 2026-08-10
+
+We will use PostgreSQL for the application database, Spring Data JPA for persistence, and Flyway for versioned schema migrations.
+
+Why:
+
+- PostgreSQL is production-grade and common in backend roles.
+- JPA lets the Java domain model map cleanly to relational data.
+- Flyway keeps schema changes explicit, reviewable, and repeatable.
+- Setting Hibernate to `validate` prevents the app from silently changing the schema outside migrations.
+
+Tradeoffs:
+
+- Local development now needs a running PostgreSQL database.
+- Every schema change requires a migration, which is a little slower but much safer.
+- JPA can hide SQL details, so we should still inspect generated queries as the model grows.
+
 ## Commit Strategy
 
 We will push after successful logical milestones, such as:

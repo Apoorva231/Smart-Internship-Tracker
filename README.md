@@ -23,3 +23,25 @@ This project is intentionally developed in small, professional increments so eac
 ## Engineering Notes
 
 See [docs/engineering-log.md](docs/engineering-log.md).
+
+## Local Database
+
+Start PostgreSQL:
+
+```bash
+docker compose up -d postgres
+```
+
+Run the application:
+
+```bash
+mvn spring-boot:run
+```
+
+By default, the app connects to:
+
+- Database: `smart_internship_tracker`
+- Username: `smart_tracker`
+- Password: `smart_tracker`
+
+You can override the connection with `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`.

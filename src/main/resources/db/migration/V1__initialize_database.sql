@@ -1,0 +1,2 @@
+-- Initial Flyway migration for Smart Internship Tracker.
+-- Domain tables will be added in focused follow-up migrations.
