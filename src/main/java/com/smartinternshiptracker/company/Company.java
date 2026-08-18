@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "companies")
@@ -26,9 +28,11 @@ public class Company {
 
     private String size;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
@@ -39,6 +43,12 @@ public class Company {
         this.id = id;
         this.name = name;
         this.location = location;
+        this.website = website;
+        this.industry = industry;
+        this.size = size;
+    }
+
+    public void updateDetails(String website, String industry, String size) {
         this.website = website;
         this.industry = industry;
         this.size = size;

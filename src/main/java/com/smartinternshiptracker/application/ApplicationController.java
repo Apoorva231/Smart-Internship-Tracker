@@ -1,6 +1,11 @@
 package com.smartinternshiptracker.application;
 
 import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +44,17 @@ public class ApplicationController {
     ) {
         return new ApplicationDetailResponse(
                 applicationService.getApplication(id, userId)
+        );
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApplicationDetailResponse createApplication(
+            @RequestHeader("X-User-Id") String userId,
+            @Valid @RequestBody ApplicationCreateRequest request
+    ) {
+        return new ApplicationDetailResponse(
+                applicationService.createApplication(userId, request)
         );
     }
 }
