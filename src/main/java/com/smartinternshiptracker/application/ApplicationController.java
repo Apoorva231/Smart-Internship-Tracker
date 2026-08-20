@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -67,5 +68,14 @@ public class ApplicationController {
         return new ApplicationDetailResponse(
                 applicationService.updateApplication(id, userId, request)
         );
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteApplication(
+            @RequestHeader("X-User-Id") String userId,
+            @PathVariable String id
+    ) {
+        applicationService.deleteApplication(id, userId);
     }
 }

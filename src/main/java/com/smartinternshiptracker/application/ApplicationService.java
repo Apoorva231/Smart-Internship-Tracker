@@ -127,6 +127,13 @@ public class ApplicationService {
         return toResponse(applicationRepository.save(application));
     }
 
+    public void deleteApplication(String id, String userId) {
+        Application application = applicationRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(ApplicationNotFoundException::new);
+
+        applicationRepository.delete(application);
+    }
+
     private Company resolveCompany(
             String companyId,
             String companyName,

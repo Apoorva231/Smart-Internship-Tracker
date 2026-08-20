@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -225,4 +226,13 @@ class ApplicationControllerTest {
 
         verify(applicationService).updateApplication(eq("app_123"), eq("user_123"), any(ApplicationUpdateRequest.class));
     }
+
+    @Test
+        void deleteApplicationReturnsNoContent() throws Exception {
+        mockMvc.perform(delete("/api/applications/app_123")
+                        .header("X-User-Id", "user_123"))
+                .andExpect(status().isNoContent());
+
+        verify(applicationService).deleteApplication("app_123", "user_123");
+        }
 }

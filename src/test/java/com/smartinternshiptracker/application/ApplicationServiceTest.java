@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.smartinternshiptracker.company.Company;
@@ -181,6 +182,36 @@ class ApplicationServiceTest {
 
         assertEquals(ApplicationStatus.APPLIED, response.status());
         assertNotNull(response.appliedAt());
+    }
+
+    @Test
+    void deleteApplicationDeletesExistingApplication() {
+        User user = new User("user_123", "apoorva@example.com", "Apoorva", "hash", "Montreal, QC");
+        Company company = new Company("company_123", "Amazon", "Montreal, QC", null, "Technology", null);
+
+        Application application = new Application(
+                "app_123",
+                "Software Intern",
+                ApplicationStatus.SAVED,
+                WorkMode.HYBRID,
+                2,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                user,
+                company
+        );
+
+        when(applicationRepository.findByIdAndUserId("app_123", "user_123"))
+                .thenReturn(Optional.of(application));
+
+        applicationService.deleteApplication("app_123", "user_123");
+
+        verify(applicationRepository).delete(application);
     }
 
 }
