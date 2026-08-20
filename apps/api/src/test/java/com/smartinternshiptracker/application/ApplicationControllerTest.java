@@ -168,7 +168,10 @@ class ApplicationControllerTest {
                                   "role": "Software Intern"
                                 }
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.errors.companyReferencePresent")
+                        .value("Choose an existing company or enter a new company name"));
     }
 
     @Test
@@ -228,11 +231,11 @@ class ApplicationControllerTest {
     }
 
     @Test
-        void deleteApplicationReturnsNoContent() throws Exception {
+    void deleteApplicationReturnsNoContent() throws Exception {
         mockMvc.perform(delete("/api/applications/app_123")
                         .header("X-User-Id", "user_123"))
                 .andExpect(status().isNoContent());
 
         verify(applicationService).deleteApplication("app_123", "user_123");
-        }
+    }
 }
