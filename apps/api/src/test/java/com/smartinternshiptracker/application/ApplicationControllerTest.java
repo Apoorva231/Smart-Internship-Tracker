@@ -46,6 +46,15 @@ class ApplicationControllerTest {
     }
 
     @Test
+    void listApplicationsRejectsInvalidStatusFilter() throws Exception {
+        mockMvc.perform(get("/api/applications")
+                        .header("X-User-Id", "user_123")
+                        .param("status", "NOPE"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid request parameter"));
+    }
+
+    @Test
     void getApplicationReturnsApplicationEnvelope() throws Exception {
         LocalDateTime now = LocalDateTime.parse("2026-08-17T12:00:00");
 
