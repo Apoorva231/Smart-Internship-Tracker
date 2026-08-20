@@ -3,8 +3,8 @@ package com.smartinternshiptracker.application;
 import com.smartinternshiptracker.company.Company;
 import com.smartinternshiptracker.company.CompanyRepository;
 import com.smartinternshiptracker.task.TaskRepository;
-import com.smartinternshiptracker.user.UserRepository;
 import com.smartinternshiptracker.user.User;
+import com.smartinternshiptracker.user.UserRepository;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
@@ -20,10 +20,10 @@ public class ApplicationService {
     private final UserRepository userRepository;
 
     private static final Set<ApplicationStatus> SUBMITTED_STATUSES = EnumSet.of(
-        ApplicationStatus.APPLIED,
-        ApplicationStatus.INTERVIEW,
-        ApplicationStatus.TECHNICAL,
-        ApplicationStatus.OFFER
+            ApplicationStatus.APPLIED,
+            ApplicationStatus.INTERVIEW,
+            ApplicationStatus.TECHNICAL,
+            ApplicationStatus.OFFER
     );
 
     public ApplicationService(
@@ -60,7 +60,14 @@ public class ApplicationService {
     public ApplicationResponse createApplication(String userId, ApplicationCreateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Company company = resolveCompany(request);
+        Company company = resolveCompany(
+                request.companyId(),
+                request.companyName(),
+                request.companyLocation(),
+                request.companyWebsite(),
+                request.companyIndustry(),
+                request.companySize()
+        );
         ApplicationStatus status = statusOrDefault(request.status());
 
         Application application = new Application(
@@ -83,27 +90,71 @@ public class ApplicationService {
         return toResponse(applicationRepository.save(application));
     }
 
-    private Company resolveCompany(ApplicationCreateRequest request) {
-        if (hasText(request.companyId())) {
-            return companyRepository.findById(request.companyId())
+    public ApplicationResponse updateApplication(String id, String userId, ApplicationUpdateRequest request) {
+        Application application = applicationRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(ApplicationNotFoundException::new);
+
+        ApplicationStatus nextStatus = request.status() == null ? application.getStatus() : request.status();
+        boolean shouldSetAppliedAt = application.getAppliedAt() == null && SUBMITTED_STATUSES.contains(nextStatus);
+
+        Company company = application.getCompany();
+        if (hasText(request.companyId()) || hasText(request.companyName())) {
+            company = resolveCompany(
+                    request.companyId(),
+                    request.companyName(),
+                    request.companyLocation(),
+                    request.companyWebsite(),
+                    request.companyIndustry(),
+                    request.companySize()
+            );
+        }
+
+        application.updateDetails(
+                request.role() == null ? application.getRole() : request.role().trim(),
+                nextStatus,
+                request.workMode() == null ? application.getWorkMode() : request.workMode(),
+                request.priority() == null ? application.getPriority() : request.priority(),
+                request.deadline() == null ? application.getDeadline() : request.deadline().toLocalDateTime(),
+                request.jobUrl() == null ? application.getJobUrl() : request.jobUrl(),
+                request.salaryRange() == null ? application.getSalaryRange() : request.salaryRange(),
+                request.contactName() == null ? application.getContactName() : request.contactName(),
+                request.contactEmail() == null ? application.getContactEmail() : request.contactEmail(),
+                request.notes() == null ? application.getNotes() : request.notes(),
+                shouldSetAppliedAt ? LocalDateTime.now() : application.getAppliedAt(),
+                company
+        );
+
+        return toResponse(applicationRepository.save(application));
+    }
+
+    private Company resolveCompany(
+            String companyId,
+            String companyName,
+            String companyLocation,
+            String companyWebsite,
+            String companyIndustry,
+            String companySize
+    ) {
+        if (hasText(companyId)) {
+            return companyRepository.findById(companyId)
                     .orElseThrow(() -> new IllegalArgumentException("Company not found"));
         }
 
-        String name = request.companyName().trim();
-        String location = companyLocationOrDefault(request.companyLocation());
-        String industry = companyIndustryOrDefault(request.companyIndustry());
+        String name = companyName.trim();
+        String location = companyLocationOrDefault(companyLocation);
+        String industry = companyIndustryOrDefault(companyIndustry);
 
         Company company = companyRepository.findByNameAndLocation(name, location)
                 .orElseGet(() -> new Company(
                         "company_" + java.util.UUID.randomUUID(),
                         name,
                         location,
-                        request.companyWebsite(),
+                        companyWebsite,
                         industry,
-                        request.companySize()
+                        companySize
                 ));
 
-        company.updateDetails(request.companyWebsite(), industry, request.companySize());
+        company.updateDetails(companyWebsite, industry, companySize);
 
         return companyRepository.save(company);
     }

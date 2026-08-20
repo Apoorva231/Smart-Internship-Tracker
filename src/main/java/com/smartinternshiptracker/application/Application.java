@@ -92,6 +92,34 @@ public class Application {
         this.company = company;
     }
 
+    public void updateDetails(
+            String role,
+            ApplicationStatus status,
+            WorkMode workMode,
+            Integer priority,
+            LocalDateTime deadline,
+            String jobUrl,
+            String salaryRange,
+            String contactName,
+            String contactEmail,
+            String notes,
+            LocalDateTime appliedAt,
+            Company company
+    ) {
+        this.role = role;
+        this.status = status;
+        this.workMode = workMode;
+        this.priority = priority;
+        this.deadline = deadline;
+        this.jobUrl = jobUrl;
+        this.salaryRange = salaryRange;
+        this.contactName = contactName;
+        this.contactEmail = contactEmail;
+        this.notes = notes;
+        this.appliedAt = appliedAt;
+        this.company = company;
+    }
+
     public String getId() {
         return id;
     }

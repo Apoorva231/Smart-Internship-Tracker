@@ -1,8 +1,8 @@
 package com.smartinternshiptracker.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -79,39 +79,108 @@ class ApplicationServiceTest {
     }
 
     @Test
-void createApplicationSetsAppliedAtForSubmittedStatus() {
-    User user = new User("user_123", "apoorva@example.com", "Apoorva", "hash", "Montreal, QC");
-    Company savedCompany = new Company("company_123", "Amazon", "Montreal, QC", null, "Technology", null);
+    void createApplicationSetsAppliedAtForSubmittedStatus() {
+        User user = new User("user_123", "apoorva@example.com", "Apoorva", "hash", "Montreal, QC");
+        Company savedCompany = new Company("company_123", "Amazon", "Montreal, QC", null, "Technology", null);
 
-    when(userRepository.findById("user_123")).thenReturn(Optional.of(user));
-    when(companyRepository.findByNameAndLocation("Amazon", "Montreal, QC")).thenReturn(Optional.empty());
-    when(companyRepository.save(any(Company.class))).thenReturn(savedCompany);
-    when(applicationRepository.save(any(Application.class))).thenAnswer(invocation -> invocation.getArgument(0));
-    when(taskRepository.findByApplicationIdOrderByCompletedAscDueDateAscCreatedAtAsc(any(String.class)))
-            .thenReturn(List.of());
+        when(userRepository.findById("user_123")).thenReturn(Optional.of(user));
+        when(companyRepository.findByNameAndLocation("Amazon", "Montreal, QC")).thenReturn(Optional.empty());
+        when(companyRepository.save(any(Company.class))).thenReturn(savedCompany);
+        when(applicationRepository.save(any(Application.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(taskRepository.findByApplicationIdOrderByCompletedAscDueDateAscCreatedAtAsc(any(String.class)))
+                .thenReturn(List.of());
 
-    ApplicationCreateRequest request = new ApplicationCreateRequest(
-            "Software Intern",
-            null,
-            "Amazon",
-            null,
-            null,
-            null,
-            null,
-            ApplicationStatus.APPLIED,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-    );
+        ApplicationCreateRequest request = new ApplicationCreateRequest(
+                "Software Intern",
+                null,
+                "Amazon",
+                null,
+                null,
+                null,
+                null,
+                ApplicationStatus.APPLIED,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
 
-    ApplicationResponse response = applicationService.createApplication("user_123", request);
+        ApplicationResponse response = applicationService.createApplication("user_123", request);
 
-    assertEquals(ApplicationStatus.APPLIED, response.status());
-    assertNotNull(response.appliedAt());
-}
+        assertEquals(ApplicationStatus.APPLIED, response.status());
+        assertNotNull(response.appliedAt());
+    }
+
+    @Test
+    void updateApplicationSetsAppliedAtWhenMovingToSubmittedStatus() {
+        User user = new User(
+                "user_123",
+                "apoorva@example.com",
+                "Apoorva",
+                "password_hash",
+                "Montreal, QC"
+        );
+
+        Company company = new Company(
+                "company_123",
+                "Amazon",
+                "Montreal, QC",
+                null,
+                "Technology",
+                null
+        );
+
+        Application application = new Application(
+                "app_123",
+                "Software Intern",
+                ApplicationStatus.SAVED,
+                WorkMode.HYBRID,
+                2,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                user,
+                company
+        );
+
+        ApplicationUpdateRequest request = new ApplicationUpdateRequest(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                ApplicationStatus.APPLIED,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        when(applicationRepository.findByIdAndUserId("app_123", "user_123"))
+                .thenReturn(Optional.of(application));
+        when(applicationRepository.save(any(Application.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(taskRepository.findByApplicationIdOrderByCompletedAscDueDateAscCreatedAtAsc("app_123"))
+                .thenReturn(List.of());
+
+        ApplicationResponse response = applicationService.updateApplication("app_123", "user_123", request);
+
+        assertEquals(ApplicationStatus.APPLIED, response.status());
+        assertNotNull(response.appliedAt());
+    }
+
 }

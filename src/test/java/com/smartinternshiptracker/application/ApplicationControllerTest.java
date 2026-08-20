@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -167,5 +168,61 @@ class ApplicationControllerTest {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateApplicationReturnsApplicationEnvelope() throws Exception {
+        LocalDateTime now = LocalDateTime.parse("2026-08-20T08:00:00");
+
+        ApplicationResponse response = new ApplicationResponse(
+                "app_123",
+                "Backend Intern",
+                ApplicationStatus.INTERVIEW,
+                WorkMode.REMOTE,
+                1,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "Updated notes",
+                now,
+                now,
+                now,
+                new ApplicationResponse.CompanyResponse(
+                        "company_123",
+                        "Amazon",
+                        "Montreal, QC",
+                        null,
+                        "Technology",
+                        null,
+                        now,
+                        now
+                ),
+                List.of()
+        );
+
+        when(applicationService.updateApplication(eq("app_123"), eq("user_123"), any(ApplicationUpdateRequest.class)))
+                .thenReturn(response);
+
+        mockMvc.perform(patch("/api/applications/app_123")
+                        .header("X-User-Id", "user_123")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "role": "Backend Intern",
+                                  "status": "INTERVIEW",
+                                  "workMode": "REMOTE",
+                                  "notes": "Updated notes"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.application.id").value("app_123"))
+                .andExpect(jsonPath("$.application.role").value("Backend Intern"))
+                .andExpect(jsonPath("$.application.status").value("INTERVIEW"))
+                .andExpect(jsonPath("$.application.workMode").value("REMOTE"))
+                .andExpect(jsonPath("$.application.notes").value("Updated notes"));
+
+        verify(applicationService).updateApplication(eq("app_123"), eq("user_123"), any(ApplicationUpdateRequest.class));
     }
 }
