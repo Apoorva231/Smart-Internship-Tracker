@@ -56,6 +56,25 @@ Tradeoffs:
 - Every schema change requires a migration, which is a little slower but much safer.
 - JPA can hide SQL details, so we should still inspect generated queries as the model grows.
 
+## Decision 004: Refactor Into A Full-Stack Monorepo
+
+Date: 2026-08-20
+
+We moved the Spring Boot API into `apps/api` and reserved `apps/web` for the future React frontend.
+
+Why:
+
+- The project is intended to become a deployed full-stack app, not only a backend.
+- Matching the original app's `apps/api` and `apps/web` shape will make the later frontend rebuild easier.
+- Keeping the backend isolated under `apps/api` makes deployment and local commands clearer.
+- A root Maven aggregator keeps `mvn test` working from the repository root while the API has its own Maven project.
+
+Tradeoffs:
+
+- Backend commands now have two valid forms: root-level Maven through the aggregator, or direct Maven commands inside `apps/api`.
+- Some local build output may move from root `target/` to `apps/api/target/`.
+- Tests now configure Mockito as a Java agent instead of relying on runtime self-attachment, which is more explicit and avoids JDK agent-loading warnings.
+
 ## Commit Strategy
 
 We will push after successful logical milestones, such as:
