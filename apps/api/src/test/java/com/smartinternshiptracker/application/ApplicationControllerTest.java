@@ -175,6 +175,22 @@ class ApplicationControllerTest {
     }
 
     @Test
+    void createApplicationRejectsInvalidStatus() throws Exception {
+        mockMvc.perform(post("/api/applications")
+                        .header("X-User-Id", "user_123")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "role": "Software Intern",
+                                  "companyName": "Amazon",
+                                  "status": "NOPE"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid request body"));
+    }
+
+    @Test
     void updateApplicationReturnsApplicationEnvelope() throws Exception {
         LocalDateTime now = LocalDateTime.parse("2026-08-20T08:00:00");
 

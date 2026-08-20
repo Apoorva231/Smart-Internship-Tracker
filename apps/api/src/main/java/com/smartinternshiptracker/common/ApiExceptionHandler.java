@@ -4,6 +4,7 @@ import com.smartinternshiptracker.application.ApplicationNotFoundException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -29,5 +30,11 @@ public class ApiExceptionHandler {
         }
 
         return new ErrorResponse("Validation failed", errors);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleUnreadableRequestBody(HttpMessageNotReadableException exception) {
+        return new ErrorResponse("Invalid request body");
     }
 }
