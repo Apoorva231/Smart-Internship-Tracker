@@ -1,5 +1,5 @@
 # Smart Internship Tracker Web
 
-Placeholder for the future React frontend.
+Reserved workspace for the React frontend.
 
-The backend currently lives in `apps/api`.
+The Spring Boot API lives in `apps/api`.

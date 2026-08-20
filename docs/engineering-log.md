@@ -1,88 +1,165 @@
 # Engineering Log
 
-This document tracks major architecture decisions, tradeoffs, and implementation notes as Smart Internship Tracker is built.
+This document records the major architecture decisions and tradeoffs for Smart Internship Tracker.
 
-## Decision 001: Build As A Greenfield Spring Boot Backend
-
-Date: 2026-08-10
-
-We will build the backend from scratch instead of porting the existing Montreal Internship Tracker implementation.
-
-Why:
-
-- The goal is to learn Spring Boot deeply, not copy an existing backend.
-- Small increments make each concept easier to understand.
-- A fresh history makes GitHub commits more meaningful for portfolio review.
-
-Tradeoffs:
-
-- Building from scratch is slower than porting.
-- Some product behavior will be guided by the previous tracker as reference.
-- We need to be disciplined about documenting decisions as the app grows.
-
-## Decision 002: Use Java 21 And Maven
-
-Date: 2026-08-10
-
-We will use Java 21 and Maven for the Spring Boot backend.
-
-Why:
-
-- Java 21 is an LTS release and widely used in Spring Boot projects.
-- Maven is already installed and configured locally.
-- Maven is common in Spring tutorials, docs, and enterprise codebases.
-
-Tradeoffs:
-
-- Gradle can be more flexible for large builds.
-- Maven XML is more verbose, but it is explicit and beginner-friendly.
-
-## Decision 003: Manage Schema Changes With Flyway
-
-Date: 2026-08-10
-
-We will use PostgreSQL for the application database, Spring Data JPA for persistence, and Flyway for versioned schema migrations.
-
-Why:
-
-- PostgreSQL is production-grade and common in backend roles.
-- JPA lets the Java domain model map cleanly to relational data.
-- Flyway keeps schema changes explicit, reviewable, and repeatable.
-- Setting Hibernate to `validate` prevents the app from silently changing the schema outside migrations.
-
-Tradeoffs:
-
-- Local development now needs a running PostgreSQL database.
-- Every schema change requires a migration, which is a little slower but much safer.
-- JPA can hide SQL details, so we should still inspect generated queries as the model grows.
-
-## Decision 004: Refactor Into A Full-Stack Monorepo
+## Decision 001: Full-Stack Monorepo
 
 Date: 2026-08-20
 
-We moved the Spring Boot API into `apps/api` and reserved `apps/web` for the future React frontend.
+Decision: keep the product in a single repository with `apps/api` for the Spring Boot API, `apps/web` for the React frontend, and `docs` for architecture notes.
 
-Why:
+Rationale:
 
-- The project is intended to become a deployed full-stack app, not only a backend.
-- Matching the original app's `apps/api` and `apps/web` shape will make the later frontend rebuild easier.
-- Keeping the backend isolated under `apps/api` makes deployment and local commands clearer.
-- A root Maven aggregator keeps `mvn test` working from the repository root while the API has its own Maven project.
+- Backend and frontend changes can be versioned together as the product becomes full stack.
+- The folder structure keeps deployable applications isolated while preserving shared root-level tooling and documentation.
+- A root Maven aggregator keeps backend verification available from the repository root.
 
 Tradeoffs:
 
-- Backend commands now have two valid forms: root-level Maven through the aggregator, or direct Maven commands inside `apps/api`.
-- Some local build output may move from root `target/` to `apps/api/target/`.
-- Tests now configure Mockito as a Java agent instead of relying on runtime self-attachment, which is more explicit and avoids JDK agent-loading warnings.
+- Commands and deployment configuration must be path-aware.
+- Future frontend tooling will coexist with Maven rather than living in a separate repository.
 
-## Commit Strategy
+## Decision 002: Spring Boot MVC API
 
-We will push after successful logical milestones, such as:
+Date: 2026-08-10
 
-- Initial project setup
-- Spring Boot scaffold
-- Database integration
-- Authentication
-- Application CRUD
-- Task management
-- Dashboard insights
+Decision: implement the backend as a Spring Boot Web MVC API.
+
+Rationale:
+
+- Spring MVC is a mature request/response framework for REST-style CRUD APIs.
+- The blocking servlet model fits the current PostgreSQL and Spring Data JPA persistence approach.
+- Controllers, services, repositories, and DTOs provide clear boundaries for HTTP handling, business logic, persistence, and API contracts.
+
+Tradeoffs:
+
+- The current model is thread-per-request, which is straightforward but less suitable for highly concurrent streaming or long-lived reactive workloads.
+- API consistency depends on maintaining explicit DTOs and centralized error handling.
+
+## Decision 003: Java 21 And Maven
+
+Date: 2026-08-10
+
+Decision: use Java 21 and Maven for the API build.
+
+Rationale:
+
+- Java 21 is a current LTS release with strong Spring Boot support.
+- Maven provides predictable dependency management and a conventional build lifecycle.
+- The root aggregator allows `mvn test` from the repository root while preserving `apps/api` as the backend module.
+
+Tradeoffs:
+
+- Maven XML is verbose compared with some build tools.
+- Additional modules may require more root-level build coordination over time.
+
+## Decision 004: PostgreSQL, JPA, And Flyway
+
+Date: 2026-08-10
+
+Decision: use PostgreSQL for persistence, Spring Data JPA for repository access, and Flyway for schema migrations.
+
+Rationale:
+
+- PostgreSQL is production-grade and supports the relational shape of users, companies, applications, and tasks.
+- JPA entities map database tables to Java domain objects while repositories handle common data access operations.
+- Flyway keeps schema changes explicit, repeatable, and reviewable.
+- Hibernate schema validation prevents the API from silently changing the database outside migrations.
+
+Tradeoffs:
+
+- Local development requires a running PostgreSQL instance.
+- Every schema change needs a migration.
+- JPA can obscure generated SQL, so query behavior should be reviewed as relationships and filters grow.
+
+## Decision 005: Domain-Oriented Package Structure
+
+Date: 2026-08-10
+
+Decision: organize backend code by product domain, such as `application`, `company`, `task`, `user`, and `common`.
+
+Rationale:
+
+- Related controllers, services, repositories, DTOs, and entities stay close to the feature they support.
+- The structure scales better than broad technical folders as product areas expand.
+- Shared cross-cutting code, such as API error responses, lives under `common`.
+
+Tradeoffs:
+
+- Cross-domain workflows must be carefully coordinated through service boundaries.
+- Shared DTOs or utilities need deliberate placement to avoid duplication.
+
+## Decision 006: Explicit API DTOs
+
+Date: 2026-08-17
+
+Decision: expose request and response DTOs instead of returning JPA entities directly.
+
+Rationale:
+
+- DTOs keep the public API contract separate from persistence details.
+- Request DTOs define accepted input for create and update operations.
+- Response DTOs can include nested company and task data while keeping application records focused.
+
+Tradeoffs:
+
+- DTO mapping adds code that must be maintained and tested.
+- Entity changes and API changes require separate review.
+
+## Decision 007: Applications CRUD Parity
+
+Date: 2026-08-18
+
+Decision: implement application list, detail, create, update, and delete behavior in Spring Boot using the existing Node/Express API as the functional reference.
+
+Rationale:
+
+- Matching the reference behavior keeps the future frontend rebuild predictable.
+- Application creation and updates resolve company records through backend-owned logic.
+- Status changes drive `appliedAt` so submitted application states are represented consistently.
+- Ownership checks use the application/user relationship before reading, updating, or deleting records.
+
+Tradeoffs:
+
+- Reference compatibility can preserve behavior that may be revisited later.
+- Company resolution adds service-layer complexity and requires clear uniqueness rules.
+- Partial update semantics must be kept explicit to avoid accidental field clearing.
+
+## Decision 008: Layered Test Strategy
+
+Date: 2026-08-18
+
+Decision: cover HTTP behavior with controller tests and business behavior with service tests.
+
+Rationale:
+
+- Controller tests verify route mappings, request handling, response shapes, and status codes.
+- Service tests verify business rules such as company resolution, applied date handling, updates, and deletes.
+- Mocked dependencies keep these tests fast and focused.
+
+Tradeoffs:
+
+- Unit and slice tests do not fully verify PostgreSQL, Flyway, or JPA behavior.
+- Integration tests should be added as the API surface stabilizes.
+
+## Decision 009: Mockito Java Agent Configuration
+
+Date: 2026-08-20
+
+Decision: configure Mockito through the Maven Surefire Java agent for API tests.
+
+Rationale:
+
+- Explicit agent configuration avoids runtime self-attachment warnings on newer JDKs.
+- Test behavior remains consistent from both the repository root and `apps/api`.
+
+Tradeoffs:
+
+- The API build has additional test plugin configuration.
+- Mockito version changes must keep the Java agent path in sync.
+
+## Current Backend Status
+
+- Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, and Applications CRUD.
+- In progress next: validation and centralized error response behavior.
+- Remaining: authentication, JWT security, companies API, follow-up tasks, dashboard insights, integration tests, API documentation, and frontend rebuild.

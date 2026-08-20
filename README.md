@@ -1,8 +1,8 @@
 # Smart Internship Tracker
 
-A full-stack internship tracking app for managing applications, companies, follow-up tasks, and dashboard insights.
+Smart Internship Tracker is a full-stack application for managing internship applications, companies, follow-up tasks, and dashboard insights.
 
-The current implementation focus is the Spring Boot API. The repository has been structured as a monorepo so a React frontend can live beside the backend later.
+The repository is organized as a monorepo with a Spring Boot API and a reserved React frontend workspace.
 
 ## Project Structure
 
@@ -10,22 +10,22 @@ The current implementation focus is the Spring Boot API. The repository has been
 apps/
   api/    Spring Boot API
   web/    Future React frontend
-docs/     Engineering notes and architecture decisions
+docs/     Architecture notes and engineering decisions
 ```
 
-## Development Approach
+## Current Scope
 
-- Build feature by feature.
-- Commit meaningful milestones to GitHub.
-- Keep an engineering log of architectural decisions and tradeoffs.
+- Spring Boot API in `apps/api`
+- PostgreSQL persistence with Flyway migrations
+- Core domain model for users, companies, applications, and tasks
+- Applications CRUD
+- React frontend workspace in `apps/web`
 
-## Planned Features
+## Planned Work
 
-- Health check endpoint
-- PostgreSQL database integration
 - User registration and login
 - JWT-based authentication
-- Company and application tracking
+- Companies API
 - Follow-up tasks
 - Dashboard insights
 - React frontend
@@ -33,6 +33,12 @@ docs/     Engineering notes and architecture decisions
 ## Engineering Notes
 
 See [docs/engineering-log.md](docs/engineering-log.md).
+
+## Development Workflow
+
+- Start local PostgreSQL with Docker Compose.
+- Run API tests with Maven before committing backend changes.
+- Record major architecture decisions and tradeoffs in `docs/engineering-log.md`.
 
 ## Local Database
 
