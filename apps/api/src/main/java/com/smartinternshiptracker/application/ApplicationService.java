@@ -1,6 +1,7 @@
 package com.smartinternshiptracker.application;
 
 import com.smartinternshiptracker.company.Company;
+import com.smartinternshiptracker.company.CompanyNotFoundException;
 import com.smartinternshiptracker.company.CompanyRepository;
 import com.smartinternshiptracker.task.TaskRepository;
 import com.smartinternshiptracker.user.User;
@@ -144,7 +145,7 @@ public class ApplicationService {
     ) {
         if (hasText(companyId)) {
             return companyRepository.findById(companyId)
-                    .orElseThrow(() -> new IllegalArgumentException("Company not found"));
+                    .orElseThrow(CompanyNotFoundException::new);
         }
 
         String name = companyName.trim();

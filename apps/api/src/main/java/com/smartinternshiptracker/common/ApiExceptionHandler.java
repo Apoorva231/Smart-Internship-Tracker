@@ -1,6 +1,7 @@
 package com.smartinternshiptracker.common;
 
 import com.smartinternshiptracker.application.ApplicationNotFoundException;
+import com.smartinternshiptracker.company.CompanyNotFoundException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,12 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ApplicationNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleApplicationNotFound(ApplicationNotFoundException exception) {
+        return new ErrorResponse(exception.getMessage());
+    }
+
+    @ExceptionHandler(CompanyNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleCompanyNotFound(CompanyNotFoundException exception) {
         return new ErrorResponse(exception.getMessage());
     }
 

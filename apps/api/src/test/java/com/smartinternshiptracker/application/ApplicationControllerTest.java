@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.smartinternshiptracker.company.CompanyNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -197,6 +198,24 @@ class ApplicationControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Invalid request body"));
+    }
+
+    @Test
+    void createApplicationReturnsNotFoundForMissingCompany() throws Exception {
+        when(applicationService.createApplication(eq("user_123"), any(ApplicationCreateRequest.class)))
+                .thenThrow(new CompanyNotFoundException());
+
+        mockMvc.perform(post("/api/applications")
+                        .header("X-User-Id", "user_123")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "role": "Software Intern",
+                                  "companyId": "company_missing"
+                                }
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Company not found"));
     }
 
     @Test
