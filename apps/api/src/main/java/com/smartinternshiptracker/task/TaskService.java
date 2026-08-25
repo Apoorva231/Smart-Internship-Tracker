@@ -43,4 +43,12 @@ public class TaskService {
 
         return TaskResponse.from(taskRepository.save(task));
     }
+
+    public void deleteTask(String taskId, String userId) {
+        Task task = taskRepository.findByIdAndApplicationUserId(taskId, userId)
+                .orElseThrow(TaskNotFoundException::new);
+
+        taskRepository.delete(task);
+    }
+
 }

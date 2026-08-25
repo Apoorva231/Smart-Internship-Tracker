@@ -2,6 +2,7 @@ package com.smartinternshiptracker.task;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,6 +41,15 @@ public class TaskController {
         return new TaskDetailResponse(
                 taskService.updateTask(taskId, userId, request)
         );
+    }
+
+    @DeleteMapping("/api/tasks/{taskId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTask(
+            @RequestHeader("X-User-Id") String userId,
+            @PathVariable String taskId
+    ) {
+        taskService.deleteTask(taskId, userId);
     }
 
 }

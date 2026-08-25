@@ -2,7 +2,9 @@ package com.smartinternshiptracker.task;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -82,6 +84,15 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.task.id").value("task_123"))
                 .andExpect(jsonPath("$.task.title").value("Send follow-up email"))
                 .andExpect(jsonPath("$.task.completed").value(true));
+    }
+
+    @Test
+    void deleteTaskReturnsNoContent() throws Exception {
+        mockMvc.perform(delete("/api/tasks/task_123")
+                        .header("X-User-Id", "user_123"))
+                .andExpect(status().isNoContent());
+
+        verify(taskService).deleteTask("task_123", "user_123");
     }
 
 }

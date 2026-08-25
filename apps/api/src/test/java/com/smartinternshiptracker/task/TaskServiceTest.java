@@ -3,6 +3,7 @@ package com.smartinternshiptracker.task;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.smartinternshiptracker.application.Application;
@@ -113,6 +114,42 @@ class TaskServiceTest {
         assertEquals("Send follow-up email", response.title());
         assertEquals("2026-08-29T09:00", response.dueDate().toString());
         assertEquals(true, response.completed());
+    }
+
+    @Test
+    void deleteTaskDeletesTaskOwnedByUser() {
+        User user = new User("user_123", "apoorva@example.com", "Apoorva", "hash", "Montreal, QC");
+        Company company = new Company("company_123", "Amazon", "Montreal, QC", null, "Technology", null);
+        Application application = new Application(
+                "app_123",
+                "Software Intern",
+                ApplicationStatus.SAVED,
+                WorkMode.HYBRID,
+                2,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                user,
+                company
+        );
+        Task task = new Task(
+                "task_123",
+                "Email recruiter",
+                null,
+                false,
+                application
+        );
+
+        when(taskRepository.findByIdAndApplicationUserId("task_123", "user_123"))
+                .thenReturn(Optional.of(task));
+
+        taskService.deleteTask("task_123", "user_123");
+
+        verify(taskRepository).delete(task);
     }
 
 }
