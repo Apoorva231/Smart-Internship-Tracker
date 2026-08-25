@@ -214,4 +214,90 @@ class ApplicationServiceTest {
         verify(applicationRepository).delete(application);
     }
 
+    @Test
+    void getInsightsCalculatesMetricsAndStatusCounts() {
+        User user = new User("user_123", "apoorva@example.com", "Apoorva", "hash", "Montreal, QC");
+        Company company = new Company("company_123", "Amazon", "Montreal, QC", null, "Technology", null);
+
+        Application saved = new Application(
+                "app_1",
+                "Software Intern",
+                ApplicationStatus.SAVED,
+                WorkMode.HYBRID,
+                1,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                user,
+                company
+        );
+        Application interview = new Application(
+                "app_2",
+                "Backend Intern",
+                ApplicationStatus.INTERVIEW,
+                WorkMode.REMOTE,
+                2,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                user,
+                company
+        );
+        Application offer = new Application(
+                "app_3",
+                "Frontend Intern",
+                ApplicationStatus.OFFER,
+                WorkMode.ONSITE,
+                2,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                user,
+                company
+        );
+        Application rejected = new Application(
+                "app_4",
+                "Data Intern",
+                ApplicationStatus.REJECTED,
+                WorkMode.HYBRID,
+                2,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                user,
+                company
+        );
+
+        when(applicationRepository.findByUserIdOrderByPriorityAscUpdatedAtDesc("user_123"))
+                .thenReturn(List.of(saved, interview, offer, rejected));
+        when(taskRepository.findTop5ByCompletedFalseAndDueDateIsNotNullAndApplicationUserIdOrderByDueDateAsc("user_123"))
+                .thenReturn(List.of());
+
+        ApplicationInsightsResponse insights = applicationService.getInsights("user_123");
+
+        assertEquals(4, insights.metrics().total());
+        assertEquals(3, insights.metrics().active());
+        assertEquals(1, insights.metrics().interviews());
+        assertEquals(1, insights.metrics().offers());
+        assertEquals(1, insights.metrics().highPriority());
+        assertEquals(4, insights.counts().size());
+        assertEquals(0, insights.upcomingTasks().size());
+    }
+
 }

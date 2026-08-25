@@ -8,4 +8,5 @@ public interface TaskRepository extends JpaRepository<Task, String> {
 
     List<Task> findByApplicationIdOrderByCompletedAscDueDateAscCreatedAtAsc(String applicationId);
     Optional<Task> findByIdAndApplicationUserId(String id, String userId);
+    List<Task> findTop5ByCompletedFalseAndDueDateIsNotNullAndApplicationUserIdOrderByDueDateAsc(String userId);
 }

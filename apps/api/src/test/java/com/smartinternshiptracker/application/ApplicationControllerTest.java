@@ -56,6 +56,36 @@ class ApplicationControllerTest {
     }
 
     @Test
+    void getInsightsReturnsInsightsEnvelope() throws Exception {
+        when(applicationService.getInsights("user_123"))
+                .thenReturn(new ApplicationInsightsResponse(
+                        List.of(new ApplicationInsightsResponse.StatusCountResponse(
+                                ApplicationStatus.APPLIED,
+                                new ApplicationInsightsResponse.CountResponse(2L)
+                        )),
+                        new ApplicationInsightsResponse.MetricsResponse(
+                                3,
+                                2,
+                                1,
+                                0,
+                                1
+                        ),
+                        List.of()
+                ));
+
+        mockMvc.perform(get("/api/applications/insights")
+                        .header("X-User-Id", "user_123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.counts[0].status").value("APPLIED"))
+                .andExpect(jsonPath("$.counts[0]._count.status").value(2))
+                .andExpect(jsonPath("$.metrics.total").value(3))
+                .andExpect(jsonPath("$.metrics.active").value(2))
+                .andExpect(jsonPath("$.upcomingTasks").isArray());
+
+        verify(applicationService).getInsights("user_123");
+    }
+
+    @Test
     void getApplicationReturnsApplicationEnvelope() throws Exception {
         LocalDateTime now = LocalDateTime.parse("2026-08-17T12:00:00");
 

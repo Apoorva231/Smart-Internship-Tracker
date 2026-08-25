@@ -38,6 +38,13 @@ public class ApplicationController {
         );
     }
 
+    @GetMapping("/insights")
+    public ApplicationInsightsResponse getInsights(
+            @RequestHeader("X-User-Id") String userId
+    ) {
+        return applicationService.getInsights(userId);
+    }
+
     @GetMapping("/{id}")
     public ApplicationDetailResponse getApplication(
             @RequestHeader("X-User-Id") String userId,

@@ -7,9 +7,13 @@ import com.smartinternshiptracker.task.TaskRepository;
 import com.smartinternshiptracker.user.User;
 import com.smartinternshiptracker.user.UserRepository;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,6 +29,16 @@ public class ApplicationService {
             ApplicationStatus.INTERVIEW,
             ApplicationStatus.TECHNICAL,
             ApplicationStatus.OFFER
+    );
+
+    private static final Set<ApplicationStatus> INACTIVE_STATUSES = EnumSet.of(
+            ApplicationStatus.REJECTED,
+            ApplicationStatus.ARCHIVED
+    );
+
+    private static final Set<ApplicationStatus> INTERVIEW_STATUSES = EnumSet.of(
+            ApplicationStatus.INTERVIEW,
+            ApplicationStatus.TECHNICAL
     );
 
     public ApplicationService(
@@ -49,6 +63,45 @@ public class ApplicationService {
         return applications.stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public ApplicationInsightsResponse getInsights(String userId) {
+        List<Application> applications = applicationRepository.findByUserIdOrderByPriorityAscUpdatedAtDesc(userId);
+        Map<ApplicationStatus, Long> countsByStatus = applications.stream()
+                .collect(Collectors.groupingBy(
+                        Application::getStatus,
+                        () -> new EnumMap<>(ApplicationStatus.class),
+                        Collectors.counting()
+                ));
+
+        return new ApplicationInsightsResponse(
+                Arrays.stream(ApplicationStatus.values())
+                        .filter(countsByStatus::containsKey)
+                        .map(status -> new ApplicationInsightsResponse.StatusCountResponse(
+                                status,
+                                new ApplicationInsightsResponse.CountResponse(countsByStatus.get(status))
+                        ))
+                        .toList(),
+                new ApplicationInsightsResponse.MetricsResponse(
+                        applications.size(),
+                        (int) applications.stream()
+                                .filter(application -> !INACTIVE_STATUSES.contains(application.getStatus()))
+                                .count(),
+                        (int) applications.stream()
+                                .filter(application -> INTERVIEW_STATUSES.contains(application.getStatus()))
+                                .count(),
+                        (int) applications.stream()
+                                .filter(application -> application.getStatus() == ApplicationStatus.OFFER)
+                                .count(),
+                        (int) applications.stream()
+                                .filter(application -> application.getPriority() == 1)
+                                .count()
+                ),
+                taskRepository.findTop5ByCompletedFalseAndDueDateIsNotNullAndApplicationUserIdOrderByDueDateAsc(userId)
+                        .stream()
+                        .map(ApplicationInsightsResponse.UpcomingTaskResponse::from)
+                        .toList()
+        );
     }
 
     public ApplicationResponse getApplication(String id, String userId) {
