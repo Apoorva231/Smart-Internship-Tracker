@@ -30,4 +30,17 @@ public class TaskService {
 
         return TaskResponse.from(taskRepository.save(task));
     }
+
+    public TaskResponse updateTask(String taskId, String userId, TaskUpdateRequest request) {
+        Task task = taskRepository.findByIdAndApplicationUserId(taskId, userId)
+                .orElseThrow(TaskNotFoundException::new);
+
+        task.updateDetails(
+                request.title() == null ? task.getTitle() : request.title().trim(),
+                request.dueDate() == null ? task.getDueDate() : request.dueDate().toLocalDateTime(),
+                request.completed() == null ? task.getCompleted() : request.completed()
+        );
+
+        return TaskResponse.from(taskRepository.save(task));
+    }
 }

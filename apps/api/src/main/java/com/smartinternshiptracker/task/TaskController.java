@@ -3,6 +3,7 @@ package com.smartinternshiptracker.task;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -29,4 +30,16 @@ public class TaskController {
                 taskService.createTask(applicationId, userId, request)
         );
     }
+
+    @PatchMapping("/api/tasks/{taskId}")
+    public TaskDetailResponse updateTask(
+            @RequestHeader("X-User-Id") String userId,
+            @PathVariable String taskId,
+            @Valid @RequestBody TaskUpdateRequest request
+    ) {
+        return new TaskDetailResponse(
+                taskService.updateTask(taskId, userId, request)
+        );
+    }
+
 }

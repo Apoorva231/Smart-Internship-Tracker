@@ -3,6 +3,7 @@ package com.smartinternshiptracker.task;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -52,4 +53,35 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.task.title").value("Email recruiter"))
                 .andExpect(jsonPath("$.task.completed").value(false));
     }
+
+    @Test
+    void updateTaskReturnsUpdatedTaskEnvelope() throws Exception {
+        LocalDateTime now = LocalDateTime.parse("2026-08-25T10:00:00");
+
+        when(taskService.updateTask(eq("task_123"), eq("user_123"), any(TaskUpdateRequest.class)))
+                .thenReturn(new TaskResponse(
+                        "task_123",
+                        "Send follow-up email",
+                        LocalDateTime.parse("2026-08-29T09:00:00"),
+                        true,
+                        now,
+                        now
+                ));
+
+        mockMvc.perform(patch("/api/tasks/task_123")
+                        .header("X-User-Id", "user_123")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Send follow-up email",
+                                  "dueDate": "2026-08-29T09:00:00-04:00",
+                                  "completed": true
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.task.id").value("task_123"))
+                .andExpect(jsonPath("$.task.title").value("Send follow-up email"))
+                .andExpect(jsonPath("$.task.completed").value(true));
+    }
+
 }

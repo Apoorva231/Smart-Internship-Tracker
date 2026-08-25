@@ -50,6 +50,12 @@ public class Task {
         this.application = application;
     }
 
+    public void updateDetails(String title, LocalDateTime dueDate, Boolean completed) {
+        this.title = title;
+        this.dueDate = dueDate;
+        this.completed = completed;
+    }
+
     public String getId() {
         return id;
     }

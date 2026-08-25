@@ -68,4 +68,51 @@ class TaskServiceTest {
         assertEquals("2026-08-28T12:00", response.dueDate().toString());
         assertFalse(response.completed());
     }
+
+    @Test
+    void updateTaskUpdatesTaskOwnedByUser() {
+        User user = new User("user_123", "apoorva@example.com", "Apoorva", "hash", "Montreal, QC");
+        Company company = new Company("company_123", "Amazon", "Montreal, QC", null, "Technology", null);
+        Application application = new Application(
+                "app_123",
+                "Software Intern",
+                ApplicationStatus.SAVED,
+                WorkMode.HYBRID,
+                2,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                user,
+                company
+        );
+        Task task = new Task(
+                "task_123",
+                "Email recruiter",
+                OffsetDateTime.parse("2026-08-28T12:00:00-04:00").toLocalDateTime(),
+                false,
+                application
+        );
+
+        when(taskRepository.findByIdAndApplicationUserId("task_123", "user_123"))
+                .thenReturn(Optional.of(task));
+        when(taskRepository.save(any(Task.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TaskUpdateRequest request = new TaskUpdateRequest(
+                "Send follow-up email",
+                OffsetDateTime.parse("2026-08-29T09:00:00-04:00"),
+                true
+        );
+
+        TaskResponse response = taskService.updateTask("task_123", "user_123", request);
+
+        assertEquals("Send follow-up email", response.title());
+        assertEquals("2026-08-29T09:00", response.dueDate().toString());
+        assertEquals(true, response.completed());
+    }
+
 }
