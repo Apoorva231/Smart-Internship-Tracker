@@ -19,15 +19,17 @@ docs/     Architecture notes and engineering decisions
 - PostgreSQL persistence with Flyway migrations
 - Core domain model for users, companies, applications, and tasks
 - Applications CRUD
+- Validation and centralized API error responses
+- Companies list endpoint
+- Follow-up tasks create, update, and delete endpoints
+- Dashboard insights endpoint
 - React frontend workspace in `apps/web`
 
 ## Planned Work
 
 - User registration and login
 - JWT-based authentication
-- Companies API
-- Follow-up tasks
-- Dashboard insights
+- Backend final polish
 - React frontend
 
 ## Engineering Notes

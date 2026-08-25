@@ -158,8 +158,60 @@ Tradeoffs:
 - The API build has additional test plugin configuration.
 - Mockito version changes must keep the Java agent path in sync.
 
+## Decision 010: Centralized Validation And Error Responses
+
+Date: 2026-08-25
+
+Decision: use Jakarta Bean Validation on request DTOs and a shared `@RestControllerAdvice` for API error responses.
+
+Rationale:
+
+- Request DTO annotations keep input rules close to the API contract.
+- `@Valid` in controllers gives Spring the same role as route-level validation middleware in Express.
+- A shared exception handler keeps error response shapes consistent across validation errors, missing resources, invalid JSON bodies, and invalid request parameters.
+
+Tradeoffs:
+
+- Validation messages become part of the API contract and should be changed deliberately.
+- Partial update DTOs need careful semantics because `null` currently means "leave unchanged" for update fields.
+
+## Decision 011: Reference-Compatible Supporting APIs
+
+Date: 2026-08-25
+
+Decision: rebuild the reference API support endpoints in Spring Boot: companies list, task create/update/delete, and application insights.
+
+Rationale:
+
+- The future React frontend can depend on the same functional API shape as the reference implementation.
+- Task reads stay embedded in application responses, while task writes use focused task endpoints.
+- Dashboard data is computed server-side through `GET /api/applications/insights`, giving the frontend ready-to-render counts, metrics, and upcoming tasks.
+- Companies are reusable records so application creation and updates can reference existing company data.
+
+Tradeoffs:
+
+- The insights service currently calculates metrics in Java from the user's application list; this is simple and testable, but large datasets may eventually need database-level aggregation.
+- Reference compatibility may preserve endpoint shapes that can be revisited after the frontend rebuild.
+
+## Decision 012: Temporary User Identity Header
+
+Date: 2026-08-25
+
+Decision: continue using `X-User-Id` as a temporary user identity mechanism until JWT security is implemented.
+
+Rationale:
+
+- It allows ownership-scoped application, company, task, and insights behavior to be built before security infrastructure.
+- It mirrors the eventual authenticated principal flow: controllers accept a user id, services query only that user's data.
+- It keeps the rebuild incremental and testable.
+
+Tradeoffs:
+
+- `X-User-Id` is not secure and must be replaced before production use.
+- Controller and test code will need a focused update when JWT authentication becomes the source of user identity.
+
 ## Current Backend Status
 
-- Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, and Applications CRUD.
-- In progress next: validation and centralized error response behavior.
-- Remaining: authentication, JWT security, companies API, follow-up tasks, dashboard insights, integration tests, API documentation, and frontend rebuild.
+- Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, Applications CRUD, validation/error handling, companies list endpoint, Tasks CRUD, and dashboard insights.
+- In progress next: authentication foundation.
+- Remaining: JWT security, backend final polish, integration tests, API documentation, and frontend rebuild.
