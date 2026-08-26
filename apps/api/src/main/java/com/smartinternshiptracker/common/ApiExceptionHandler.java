@@ -1,6 +1,8 @@
 package com.smartinternshiptracker.common;
 
 import com.smartinternshiptracker.application.ApplicationNotFoundException;
+import com.smartinternshiptracker.auth.DuplicateEmailException;
+import com.smartinternshiptracker.auth.InvalidLoginException;
 import com.smartinternshiptracker.company.CompanyNotFoundException;
 import com.smartinternshiptracker.task.TaskNotFoundException;
 import java.util.LinkedHashMap;
@@ -57,5 +59,17 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException exception) {
         return new ErrorResponse("Invalid request parameter");
+    }
+
+    @ExceptionHandler(DuplicateEmailException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDuplicateEmail(DuplicateEmailException exception) {
+        return new ErrorResponse(exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidLoginException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleInvalidLogin(InvalidLoginException exception) {
+        return new ErrorResponse(exception.getMessage());
     }
 }

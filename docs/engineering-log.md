@@ -210,8 +210,26 @@ Tradeoffs:
 - `X-User-Id` is not secure and must be replaced before production use.
 - Controller and test code will need a focused update when JWT authentication becomes the source of user identity.
 
+## Decision 013: Authentication Foundation Before JWT Security
+
+Date: 2026-08-26
+
+Decision: add user-facing auth endpoints for registration and login before adding JWT request authentication.
+
+Rationale:
+
+- Registration can create users with BCrypt-hashed passwords.
+- Login can verify raw passwords against stored password hashes.
+- Auth request and response DTOs establish the API contract before token generation is introduced.
+- Keeping JWT out of this slice preserves the temporary `X-User-Id` workflow until the next focused security milestone.
+
+Tradeoffs:
+
+- Register and login currently return a user envelope without a token.
+- Existing application/task endpoints still depend on the temporary `X-User-Id` header until JWT security replaces it.
+
 ## Current Backend Status
 
-- Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, Applications CRUD, validation/error handling, companies list endpoint, Tasks CRUD, and dashboard insights.
-- In progress next: authentication foundation.
+- Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, Applications CRUD, validation/error handling, companies list endpoint, Tasks CRUD, dashboard insights, and auth foundation.
+- In progress next: JWT security.
 - Remaining: JWT security, backend final polish, integration tests, API documentation, and frontend rebuild.
