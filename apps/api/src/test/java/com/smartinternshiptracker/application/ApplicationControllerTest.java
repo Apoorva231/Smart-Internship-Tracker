@@ -78,6 +78,23 @@ class ApplicationControllerTest {
     }
 
     @Test
+    void createApplicationRequiresBearerToken() throws Exception {
+        mockMvc.perform(post("/api/applications")
+                        .header("X-User-Id", "user_123")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                "role": "Software Intern",
+                                "status": "APPLIED",
+                                "company": {
+                                        "name": "Amazon"
+                                }
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void listApplicationsRejectsInvalidStatusFilter() throws Exception {
         mockMvc.perform(get("/api/applications")
                         .header("X-User-Id", "user_123")
@@ -161,7 +178,8 @@ class ApplicationControllerTest {
                 .thenReturn(response);
 
         mockMvc.perform(get("/api/applications/app_123")
-                        .header("X-User-Id", "user_123"))
+                        .header("X-User-Id", "user_123")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.application.id").value("app_123"))
                 .andExpect(jsonPath("$.application.role").value("Software Intern"))
@@ -178,7 +196,8 @@ class ApplicationControllerTest {
                 .getApplication("app_missing", "user_123");
 
         mockMvc.perform(get("/api/applications/app_missing")
-                        .header("X-User-Id", "user_123"))
+                        .header("X-User-Id", "user_123")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Application not found"));
     }
@@ -220,6 +239,7 @@ class ApplicationControllerTest {
 
         mockMvc.perform(post("/api/applications")
                         .header("X-User-Id", "user_123")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -242,6 +262,7 @@ class ApplicationControllerTest {
     void createApplicationRequiresCompanyReference() throws Exception {
         mockMvc.perform(post("/api/applications")
                         .header("X-User-Id", "user_123")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -258,6 +279,7 @@ class ApplicationControllerTest {
     void createApplicationRejectsInvalidStatus() throws Exception {
         mockMvc.perform(post("/api/applications")
                         .header("X-User-Id", "user_123")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -277,6 +299,7 @@ class ApplicationControllerTest {
 
         mockMvc.perform(post("/api/applications")
                         .header("X-User-Id", "user_123")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -325,6 +348,7 @@ class ApplicationControllerTest {
 
         mockMvc.perform(patch("/api/applications/app_123")
                         .header("X-User-Id", "user_123")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -347,7 +371,8 @@ class ApplicationControllerTest {
     @Test
     void deleteApplicationReturnsNoContent() throws Exception {
         mockMvc.perform(delete("/api/applications/app_123")
-                        .header("X-User-Id", "user_123"))
+                        .header("X-User-Id", "user_123")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
                 .andExpect(status().isNoContent());
 
         verify(applicationService).deleteApplication("app_123", "user_123");
