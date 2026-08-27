@@ -60,7 +60,6 @@ class ApplicationControllerTest {
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/api/applications")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .param("status", "APPLIED")
                         .param("search", "amazon"))
@@ -72,15 +71,27 @@ class ApplicationControllerTest {
 
     @Test
     void listApplicationsRequiresBearerToken() throws Exception {
-        mockMvc.perform(get("/api/applications")
-                        .header("X-User-Id", "user_123"))
+        mockMvc.perform(get("/api/applications"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void listApplicationsUsesJwtSubjectInsteadOfUserHeader() throws Exception {
+        when(applicationService.listApplications("jwt_user", null, null))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/applications")
+                        .header("X-User-Id", "spoofed_user")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("jwt_user")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.applications").isArray());
+
+        verify(applicationService).listApplications("jwt_user", null, null);
     }
 
     @Test
     void createApplicationRequiresBearerToken() throws Exception {
         mockMvc.perform(post("/api/applications")
-                        .header("X-User-Id", "user_123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -97,7 +108,6 @@ class ApplicationControllerTest {
     @Test
     void listApplicationsRejectsInvalidStatusFilter() throws Exception {
         mockMvc.perform(get("/api/applications")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .param("status", "NOPE"))
                 .andExpect(status().isBadRequest())
@@ -123,7 +133,6 @@ class ApplicationControllerTest {
                 ));
 
         mockMvc.perform(get("/api/applications/insights")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.counts[0].status").value("APPLIED"))
@@ -137,8 +146,7 @@ class ApplicationControllerTest {
 
     @Test
     void getInsightsRequiresBearerToken() throws Exception {
-        mockMvc.perform(get("/api/applications/insights")
-                        .header("X-User-Id", "user_123"))
+        mockMvc.perform(get("/api/applications/insights"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -178,7 +186,6 @@ class ApplicationControllerTest {
                 .thenReturn(response);
 
         mockMvc.perform(get("/api/applications/app_123")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.application.id").value("app_123"))
@@ -196,7 +203,6 @@ class ApplicationControllerTest {
                 .getApplication("app_missing", "user_123");
 
         mockMvc.perform(get("/api/applications/app_missing")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Application not found"));
@@ -238,7 +244,6 @@ class ApplicationControllerTest {
                 .thenReturn(response);
 
         mockMvc.perform(post("/api/applications")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -261,7 +266,6 @@ class ApplicationControllerTest {
     @Test
     void createApplicationRequiresCompanyReference() throws Exception {
         mockMvc.perform(post("/api/applications")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -278,7 +282,6 @@ class ApplicationControllerTest {
     @Test
     void createApplicationRejectsInvalidStatus() throws Exception {
         mockMvc.perform(post("/api/applications")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -298,7 +301,6 @@ class ApplicationControllerTest {
                 .thenThrow(new CompanyNotFoundException());
 
         mockMvc.perform(post("/api/applications")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -347,7 +349,6 @@ class ApplicationControllerTest {
                 .thenReturn(response);
 
         mockMvc.perform(patch("/api/applications/app_123")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -371,7 +372,6 @@ class ApplicationControllerTest {
     @Test
     void deleteApplicationReturnsNoContent() throws Exception {
         mockMvc.perform(delete("/api/applications/app_123")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken()))
                 .andExpect(status().isNoContent());
 
@@ -379,9 +379,13 @@ class ApplicationControllerTest {
     }
 
     private String bearerToken() {
+        return bearerToken("user_123");
+    }
+
+    private String bearerToken(String userId) {
         JwtService jwtService = new JwtService(new JwtProperties(JWT_SECRET, 60));
         User user = new User(
-                "user_123",
+                userId,
                 "apoorva@example.com",
                 "Apoorva",
                 "hashed_password",

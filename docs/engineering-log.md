@@ -246,8 +246,26 @@ Tradeoffs:
 - Tokens are issued but not yet required by application, company, task, or insights endpoints.
 - The local default JWT secret is convenient for development, but production must provide a real `JWT_SECRET` environment variable.
 
+## Decision 015: JWT Subject As Protected Route Identity
+
+Date: 2026-08-27
+
+Decision: use the authenticated JWT subject as the current user id for protected application and task routes.
+
+Rationale:
+
+- Spring Security validates bearer tokens before protected controllers run.
+- `@AuthenticationPrincipal Jwt` gives controllers the validated token, similar to reading `req.user` after Express auth middleware.
+- The `sub` claim is generated from the authenticated user's id, so ownership-scoped service calls no longer trust a client-controlled `X-User-Id` header.
+- Keeping the service APIs as plain `userId` strings preserves the existing application/task ownership logic while removing the spoofable HTTP identity input.
+
+Tradeoffs:
+
+- Controller tests now need valid JWT fixtures for protected happy paths.
+- Security polish still needs a later pass for CORS, production secret handling, route privacy review, and cleaner auth error responses.
+
 ## Current Backend Status
 
-- Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, Applications CRUD, validation/error handling, companies list endpoint, Tasks CRUD, dashboard insights, auth foundation, and JWT issuing for register/login.
-- In progress next: JWT route protection and replacing temporary `X-User-Id`.
-- Remaining: JWT route protection, backend final polish, integration tests, API documentation, and frontend rebuild.
+- Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, Applications CRUD, validation/error handling, companies list endpoint, Tasks CRUD, dashboard insights, auth foundation, JWT issuing for register/login, JWT route protection, and JWT subject-based identity for protected application/task routes.
+- In progress next: backend final polish.
+- Remaining: backend final polish, integration tests, API documentation, and frontend rebuild.

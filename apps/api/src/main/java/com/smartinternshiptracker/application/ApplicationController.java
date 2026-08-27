@@ -3,6 +3,8 @@ package com.smartinternshiptracker.application;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,7 +12,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -29,60 +30,60 @@ public class ApplicationController {
 
     @GetMapping
     public ApplicationListResponse listApplications(
-            @RequestHeader("X-User-Id") String userId,
+            @AuthenticationPrincipal Jwt jwt,
             @RequestParam(required = false) ApplicationStatus status,
             @RequestParam(required = false) @Size(max = 120) String search
     ) {
         return new ApplicationListResponse(
-                applicationService.listApplications(userId, status, search)
+                applicationService.listApplications(jwt.getSubject(), status, search)
         );
     }
 
     @GetMapping("/insights")
     public ApplicationInsightsResponse getInsights(
-            @RequestHeader("X-User-Id") String userId
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        return applicationService.getInsights(userId);
+        return applicationService.getInsights(jwt.getSubject());
     }
 
     @GetMapping("/{id}")
     public ApplicationDetailResponse getApplication(
-            @RequestHeader("X-User-Id") String userId,
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable String id
     ) {
         return new ApplicationDetailResponse(
-                applicationService.getApplication(id, userId)
+                applicationService.getApplication(id, jwt.getSubject())
         );
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApplicationDetailResponse createApplication(
-            @RequestHeader("X-User-Id") String userId,
+            @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ApplicationCreateRequest request
     ) {
         return new ApplicationDetailResponse(
-                applicationService.createApplication(userId, request)
+                applicationService.createApplication(jwt.getSubject(), request)
         );
     }
 
     @PatchMapping("/{id}")
     public ApplicationDetailResponse updateApplication(
-            @RequestHeader("X-User-Id") String userId,
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable String id,
             @Valid @RequestBody ApplicationUpdateRequest request
     ) {
         return new ApplicationDetailResponse(
-                applicationService.updateApplication(id, userId, request)
+                applicationService.updateApplication(id, jwt.getSubject(), request)
         );
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteApplication(
-            @RequestHeader("X-User-Id") String userId,
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable String id
     ) {
-        applicationService.deleteApplication(id, userId);
+        applicationService.deleteApplication(id, jwt.getSubject());
     }
 }

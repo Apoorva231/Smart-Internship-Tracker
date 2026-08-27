@@ -65,7 +65,6 @@ class TaskControllerTest {
                 ));
 
         mockMvc.perform(post("/api/applications/app_123/tasks")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -83,7 +82,6 @@ class TaskControllerTest {
     @Test
     void createTaskRequiresBearerToken() throws Exception {
         mockMvc.perform(post("/api/applications/app_123/tasks")
-                        .header("X-User-Id", "user_123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -109,7 +107,6 @@ class TaskControllerTest {
                 ));
 
         mockMvc.perform(patch("/api/tasks/task_123")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -128,17 +125,30 @@ class TaskControllerTest {
     @Test
     void deleteTaskReturnsNoContent() throws Exception {
         mockMvc.perform(delete("/api/tasks/task_123")
-                        .header("X-User-Id", "user_123")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken()))
                 .andExpect(status().isNoContent());
 
         verify(taskService).deleteTask("task_123", "user_123");
     }
 
+    @Test
+    void deleteTaskUsesJwtSubjectInsteadOfUserHeader() throws Exception {
+        mockMvc.perform(delete("/api/tasks/task_123")
+                        .header("X-User-Id", "spoofed_user")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("jwt_user")))
+                .andExpect(status().isNoContent());
+
+        verify(taskService).deleteTask("task_123", "jwt_user");
+    }
+
     private String bearerToken() {
+        return bearerToken("user_123");
+    }
+
+    private String bearerToken(String userId) {
         JwtService jwtService = new JwtService(new JwtProperties(JWT_SECRET, 60));
         User user = new User(
-                "user_123",
+                userId,
                 "apoorva@example.com",
                 "Apoorva",
                 "hashed_password",

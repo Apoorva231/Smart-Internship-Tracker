@@ -23,13 +23,14 @@ docs/     Architecture notes and engineering decisions
 - Companies list endpoint
 - Follow-up tasks create, update, and delete endpoints
 - Dashboard insights endpoint
+- User registration/login with JWT responses
+- JWT-protected application and task endpoints
 - React frontend workspace in `apps/web`
 
 ## Planned Work
 
-- User registration and login
-- JWT-based authentication
 - Backend final polish
+- Integration tests and API runbook
 - React frontend
 
 ## Engineering Notes
