@@ -72,6 +72,14 @@ Tradeoffs:
 - Every schema change needs a migration.
 - JPA can obscure generated SQL, so query behavior should be reviewed as relationships and filters grow.
 
+Schema design notes:
+
+- The core model is relational: users own applications, applications belong to reusable companies, and tasks belong to applications.
+- Companies are global reusable records with a unique `(name, location)` rule, so repeated applications can share the same company instead of duplicating company data.
+- Application status and work mode use PostgreSQL enums because the allowed values are small, stable, and important to filtering/dashboard logic.
+- A relational database fits this app better than a document database because ownership checks, joins, cascade deletes, status filters, and dashboard counts are central workflows.
+- The tradeoff is less schema flexibility than a non-relational store, so schema changes must go through Flyway migrations and integration tests.
+
 ## Decision 005: Domain-Oriented Package Structure
 
 Date: 2026-08-10
@@ -285,6 +293,6 @@ Tradeoffs:
 
 ## Current Backend Status
 
-- Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, Applications CRUD, validation/error handling, companies list endpoint, Tasks CRUD, dashboard insights, auth foundation, JWT issuing for register/login, JWT route protection, and JWT subject-based identity for protected application/task routes.
-- In progress next: backend final polish.
-- Remaining: backend final polish, integration tests, API documentation, and frontend rebuild.
+- Implemented: Spring Boot scaffold, PostgreSQL/Flyway schema, JPA entities and repositories, Applications CRUD, companies list, Tasks CRUD, dashboard insights, validation/error handling, register/login, JWT issuing, JWT route protection, JWT subject-based identity, `GET /api/auth/me`, Testcontainers integration tests, and the API runbook.
+- Backend status: ready for the frontend rebuild.
+- Remaining: frontend rebuild. Minor backend differences from the Node reference can be addressed later if the frontend needs them.
