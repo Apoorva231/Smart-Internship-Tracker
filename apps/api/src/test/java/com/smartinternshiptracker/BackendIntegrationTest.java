@@ -174,6 +174,84 @@ class BackendIntegrationTest extends IntegrationTestSupport {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void returnsInsightsForAuthenticatedUser() throws Exception {
+        String token = registerAndLogin("insights@example.com");
+
+        MvcResult applicationResult = mockMvc.perform(post("/api/applications")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "role": "Data Intern",
+                                  "companyName": "Coveo",
+                                  "status": "INTERVIEW",
+                                  "priority": 1
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String applicationId = objectMapper.readTree(applicationResult.getResponse().getContentAsString())
+                .path("application")
+                .path("id")
+                .asString();
+        assertFalse(applicationId.isBlank());
+
+        mockMvc.perform(post("/api/applications/{applicationId}/tasks", applicationId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Practice SQL questions",
+                                  "dueDate": "2026-09-03T10:00:00-04:00"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/applications/insights")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.metrics.total").value(1))
+                .andExpect(jsonPath("$.metrics.active").value(1))
+                .andExpect(jsonPath("$.metrics.interviews").value(1))
+                .andExpect(jsonPath("$.metrics.offers").value(0))
+                .andExpect(jsonPath("$.metrics.highPriority").value(1))
+                .andExpect(jsonPath("$.counts[0].status").value("INTERVIEW"))
+                .andExpect(jsonPath("$.counts[0]._count.status").value(1))
+                .andExpect(jsonPath("$.upcomingTasks[0].title").value("Practice SQL questions"))
+                .andExpect(jsonPath("$.upcomingTasks[0].application.role").value("Data Intern"));
+    }
+
+    @Test
+    void companiesEndpointRequiresJwtAndWorksWithJwt() throws Exception {
+        mockMvc.perform(get("/api/companies"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized"));
+
+        String token = registerAndLogin("companies@example.com");
+
+        mockMvc.perform(post("/api/applications")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "role": "Product Intern",
+                                  "companyName": "Busbud",
+                                  "companyLocation": "Montreal, QC",
+                                  "status": "SAVED",
+                                  "priority": 3
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/companies")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.companies[0].name").value("Busbud"))
+                .andExpect(jsonPath("$.companies[0].location").value("Montreal, QC"));
+    }
+
     private String registerAndLogin(String email) throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
