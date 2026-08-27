@@ -3,11 +3,14 @@ package com.smartinternshiptracker.auth;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.smartinternshiptracker.user.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 
 class JwtConfigurationTest {
 
@@ -31,6 +34,27 @@ class JwtConfigurationTest {
         });
     }
 
+    @Test
+    void jwtDecoderCanVerifyGeneratedToken() {
+        contextRunner.run(context -> {
+            JwtService jwtService = context.getBean(JwtService.class);
+            JwtDecoder jwtDecoder = context.getBean(JwtDecoder.class);
+
+            User user = new User(
+                    "user_123",
+                    "apoorva@example.com",
+                    "Apoorva",
+                    "hashed_password",
+                    "Montreal, QC"
+            );
+
+            String token = jwtService.generateToken(user);
+            Jwt decodedToken = jwtDecoder.decode(token);
+
+            assertEquals("user_123", decodedToken.getSubject());
+        });
+    }
+
     @Configuration
     @EnableConfigurationProperties(JwtProperties.class)
     static class TestConfig {
@@ -38,6 +62,11 @@ class JwtConfigurationTest {
         @Bean
         JwtService jwtService(JwtProperties properties) {
             return new JwtService(properties);
+        }
+
+        @Bean
+        JwtDecoder jwtDecoder(JwtProperties properties) {
+            return new SecurityConfig().jwtDecoder(properties);
         }
     }
 }
