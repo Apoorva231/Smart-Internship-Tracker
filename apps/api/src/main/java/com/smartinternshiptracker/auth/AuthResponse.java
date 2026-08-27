@@ -1,6 +1,7 @@
 package com.smartinternshiptracker.auth;
 
 public record AuthResponse(
-        AuthUserResponse user
+        AuthUserResponse user,
+        String token
 ) {
 }

@@ -29,6 +29,9 @@ class AuthServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private JwtService jwtService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -43,6 +46,7 @@ class AuthServiceTest {
         when(userRepository.findByEmail("apoorva@example.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("Password123!")).thenReturn("hashed_password");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(jwtService.generateToken(any(User.class))).thenReturn("jwt_token");
 
         AuthResponse response = authService.register(request);
 
@@ -61,6 +65,7 @@ class AuthServiceTest {
         assertEquals("Apoorva", response.user().name());
         assertEquals("apoorva@example.com", response.user().email());
         assertEquals("Montreal, QC", response.user().city());
+        assertEquals("jwt_token", response.token());
     }
 
     @Test
@@ -104,6 +109,7 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail("apoorva@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("Password123!", "hashed_password")).thenReturn(true);
+        when(jwtService.generateToken(user)).thenReturn("jwt_token");
 
         AuthResponse response = authService.login(request);
 
@@ -113,6 +119,7 @@ class AuthServiceTest {
         assertEquals("Apoorva", response.user().name());
         assertEquals("apoorva@example.com", response.user().email());
         assertEquals("Montreal, QC", response.user().city());
+        assertEquals("jwt_token", response.token());
     }
 
     @Test

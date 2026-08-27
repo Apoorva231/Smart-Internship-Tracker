@@ -228,8 +228,26 @@ Tradeoffs:
 - Register and login currently return a user envelope without a token.
 - Existing application/task endpoints still depend on the temporary `X-User-Id` header until JWT security replaces it.
 
+## Decision 014: JWT Issuing Before Route Protection
+
+Date: 2026-08-27
+
+Decision: introduce JWT generation and return tokens from registration and login before requiring bearer tokens on protected routes.
+
+Rationale:
+
+- `JwtService` can create signed tokens that identify the authenticated user.
+- Auth responses now return both the user envelope and a token for the frontend to store and send on later requests.
+- JWT settings are loaded through typed `JwtProperties`, with local defaults and environment-variable overrides.
+- Keeping route protection for the next slice preserves a small, testable checkpoint before replacing `X-User-Id`.
+
+Tradeoffs:
+
+- Tokens are issued but not yet required by application, company, task, or insights endpoints.
+- The local default JWT secret is convenient for development, but production must provide a real `JWT_SECRET` environment variable.
+
 ## Current Backend Status
 
-- Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, Applications CRUD, validation/error handling, companies list endpoint, Tasks CRUD, dashboard insights, and auth foundation.
-- In progress next: JWT security.
-- Remaining: JWT security, backend final polish, integration tests, API documentation, and frontend rebuild.
+- Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, Applications CRUD, validation/error handling, companies list endpoint, Tasks CRUD, dashboard insights, auth foundation, and JWT issuing for register/login.
+- In progress next: JWT route protection and replacing temporary `X-User-Id`.
+- Remaining: JWT route protection, backend final polish, integration tests, API documentation, and frontend rebuild.

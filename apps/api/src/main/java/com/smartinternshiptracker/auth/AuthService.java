@@ -12,10 +12,16 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -48,12 +54,15 @@ public class AuthService {
     }
 
     private AuthResponse toResponse(User user) {
-        return new AuthResponse(new AuthUserResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getCity()
-        ));
+        return new AuthResponse(
+                new AuthUserResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getCity()
+                ),
+                jwtService.generateToken(user)
+        );
     }
 
     private String normalizeEmail(String email) {

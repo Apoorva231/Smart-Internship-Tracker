@@ -28,12 +28,15 @@ class AuthControllerTest {
     @Test
     void registerReturnsCreatedUserEnvelope() throws Exception {
         when(authService.register(any(RegisterRequest.class)))
-                .thenReturn(new AuthResponse(new AuthUserResponse(
-                        "user_123",
-                        "Apoorva",
-                        "apoorva@example.com",
-                        "Montreal, QC"
-                )));
+                .thenReturn(new AuthResponse(
+                        new AuthUserResponse(
+                                "user_123",
+                                "Apoorva",
+                                "apoorva@example.com",
+                                "Montreal, QC"
+                        ),
+                        "jwt_token"
+                ));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -48,7 +51,8 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.user.id").value("user_123"))
                 .andExpect(jsonPath("$.user.name").value("Apoorva"))
                 .andExpect(jsonPath("$.user.email").value("apoorva@example.com"))
-                .andExpect(jsonPath("$.user.city").value("Montreal, QC"));
+                .andExpect(jsonPath("$.user.city").value("Montreal, QC"))
+                .andExpect(jsonPath("$.token").value("jwt_token"));
 
         verify(authService).register(any(RegisterRequest.class));
     }
@@ -56,12 +60,15 @@ class AuthControllerTest {
     @Test
     void loginReturnsUserEnvelope() throws Exception {
         when(authService.login(any(LoginRequest.class)))
-                .thenReturn(new AuthResponse(new AuthUserResponse(
-                        "user_123",
-                        "Apoorva",
-                        "apoorva@example.com",
-                        "Montreal, QC"
-                )));
+                .thenReturn(new AuthResponse(
+                        new AuthUserResponse(
+                                "user_123",
+                                "Apoorva",
+                                "apoorva@example.com",
+                                "Montreal, QC"
+                        ),
+                        "jwt_token"
+                ));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -75,7 +82,8 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.user.id").value("user_123"))
                 .andExpect(jsonPath("$.user.name").value("Apoorva"))
                 .andExpect(jsonPath("$.user.email").value("apoorva@example.com"))
-                .andExpect(jsonPath("$.user.city").value("Montreal, QC"));
+                .andExpect(jsonPath("$.user.city").value("Montreal, QC"))
+                .andExpect(jsonPath("$.token").value("jwt_token"));
 
         verify(authService).login(any(LoginRequest.class));
     }
