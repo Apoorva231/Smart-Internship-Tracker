@@ -53,15 +53,26 @@ public class AuthService {
         return toResponse(user);
     }
 
+    public CurrentUserResponse currentUser(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(CurrentUserNotFoundException::new);
+
+        return new CurrentUserResponse(toUserResponse(user));
+    }
+
     private AuthResponse toResponse(User user) {
         return new AuthResponse(
-                new AuthUserResponse(
-                        user.getId(),
-                        user.getName(),
-                        user.getEmail(),
-                        user.getCity()
-                ),
+                toUserResponse(user),
                 jwtService.generateToken(user)
+        );
+    }
+
+    private AuthUserResponse toUserResponse(User user) {
+        return new AuthUserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getCity()
         );
     }
 

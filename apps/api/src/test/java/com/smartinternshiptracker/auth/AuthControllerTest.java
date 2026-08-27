@@ -5,19 +5,41 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.smartinternshiptracker.user.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
+@Import(SecurityConfig.class)
+@ImportAutoConfiguration({
+        SecurityAutoConfiguration.class,
+        SecurityFilterAutoConfiguration.class,
+        ServletWebSecurityAutoConfiguration.class
+})
+@TestPropertySource(properties = {
+        "app.jwt.secret=01234567890123456789012345678901",
+        "app.jwt.expiration-minutes=60",
+        "app.cors.allowed-origins=http://localhost:5173"
+})
 class AuthControllerTest {
+
+    private static final String JWT_SECRET = "01234567890123456789012345678901";
 
     @Autowired
     private MockMvc mockMvc;
@@ -86,6 +108,36 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.token").value("jwt_token"));
 
         verify(authService).login(any(LoginRequest.class));
+    }
+
+    @Test
+    void meReturnsCurrentUserEnvelope() throws Exception {
+        when(authService.currentUser("user_123"))
+                .thenReturn(new CurrentUserResponse(
+                        new AuthUserResponse(
+                                "user_123",
+                                "Apoorva",
+                                "apoorva@example.com",
+                                "Montreal, QC"
+                        )
+                ));
+
+        mockMvc.perform(get("/api/auth/me")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.id").value("user_123"))
+                .andExpect(jsonPath("$.user.name").value("Apoorva"))
+                .andExpect(jsonPath("$.user.email").value("apoorva@example.com"))
+                .andExpect(jsonPath("$.user.city").value("Montreal, QC"));
+
+        verify(authService).currentUser("user_123");
+    }
+
+    @Test
+    void meRequiresBearerToken() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized"));
     }
 
     @Test
@@ -158,6 +210,19 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.errors.email").isNotEmpty());
 
         verify(authService, never()).login(any(LoginRequest.class));
+    }
+
+    private String bearerToken() {
+        JwtService jwtService = new JwtService(new JwtProperties(JWT_SECRET, 60));
+        User user = new User(
+                "user_123",
+                "apoorva@example.com",
+                "Apoorva",
+                "hashed_password",
+                "Montreal, QC"
+        );
+
+        return "Bearer " + jwtService.generateToken(user);
     }
 
 }

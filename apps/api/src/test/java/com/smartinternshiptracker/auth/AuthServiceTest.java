@@ -159,4 +159,31 @@ class AuthServiceTest {
         verify(passwordEncoder).matches("WrongPassword123!", "hashed_password");
     }
 
+    @Test
+    void currentUserReturnsUserEnvelope() {
+        User user = new User(
+                "user_123",
+                "apoorva@example.com",
+                "Apoorva",
+                "hashed_password",
+                "Montreal, QC"
+        );
+
+        when(userRepository.findById("user_123")).thenReturn(Optional.of(user));
+
+        CurrentUserResponse response = authService.currentUser("user_123");
+
+        assertEquals("user_123", response.user().id());
+        assertEquals("Apoorva", response.user().name());
+        assertEquals("apoorva@example.com", response.user().email());
+        assertEquals("Montreal, QC", response.user().city());
+    }
+
+    @Test
+    void currentUserRejectsMissingUser() {
+        when(userRepository.findById("missing_user")).thenReturn(Optional.empty());
+
+        assertThrows(CurrentUserNotFoundException.class, () -> authService.currentUser("missing_user"));
+    }
+
 }

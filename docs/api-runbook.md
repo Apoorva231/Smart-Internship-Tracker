@@ -134,15 +134,17 @@ The JWT `sub` claim is the authenticated user id. Controllers read it with `@Aut
 
 Protected route groups:
 
+- `/api/auth/me`
 - `/api/applications`
 - `/api/applications/**`
 - `/api/tasks/**`
 - `/api/companies`
 - `/api/companies/**`
 
-Public route groups:
+Public routes:
 
-- `/api/auth/**`
+- `/api/auth/register`
+- `/api/auth/login`
 - `/api/health`
 
 Do not use `X-User-Id` for new code. Protected application and task routes use the JWT subject for ownership checks.
@@ -185,6 +187,23 @@ Required body fields:
 
 - `email`
 - `password`
+
+`GET /api/auth/me`
+
+Protected. Returns the authenticated user for an existing bearer token.
+
+Returns:
+
+```json
+{
+  "user": {
+    "id": "user_...",
+    "name": "Apoorva",
+    "email": "apoorva@example.com",
+    "city": "Montreal, QC"
+  }
+}
+```
 
 ### Applications
 

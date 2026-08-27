@@ -1,6 +1,7 @@
 package com.smartinternshiptracker.common;
 
 import com.smartinternshiptracker.application.ApplicationNotFoundException;
+import com.smartinternshiptracker.auth.CurrentUserNotFoundException;
 import com.smartinternshiptracker.auth.DuplicateEmailException;
 import com.smartinternshiptracker.auth.InvalidLoginException;
 import com.smartinternshiptracker.company.CompanyNotFoundException;
@@ -70,6 +71,12 @@ public class ApiExceptionHandler {
     @ExceptionHandler(InvalidLoginException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleInvalidLogin(InvalidLoginException exception) {
+        return new ErrorResponse(exception.getMessage());
+    }
+
+    @ExceptionHandler(CurrentUserNotFoundException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleCurrentUserNotFound(CurrentUserNotFoundException exception) {
         return new ErrorResponse(exception.getMessage());
     }
 }

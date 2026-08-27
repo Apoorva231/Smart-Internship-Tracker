@@ -86,6 +86,18 @@ class BackendIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void returnsCurrentUserForBearerToken() throws Exception {
+        String token = registerAndLogin("me@example.com");
+
+        mockMvc.perform(get("/api/auth/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.name").value("Apoorva"))
+                .andExpect(jsonPath("$.user.email").value("me@example.com"))
+                .andExpect(jsonPath("$.user.city").value("Montreal, QC"));
+    }
+
+    @Test
     void createsTaskForCreatedApplication() throws Exception {
         String token = registerAndLogin("task-flow@example.com");
 
