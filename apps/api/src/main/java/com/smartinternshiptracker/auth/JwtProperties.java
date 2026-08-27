@@ -7,4 +7,5 @@ public record JwtProperties(
         String secret,
         long expirationMinutes
 ) {
+    public static final String DEFAULT_DEV_SECRET = "01234567890123456789012345678901";
 }
