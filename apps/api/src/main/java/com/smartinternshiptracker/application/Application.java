@@ -12,7 +12,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "applications")
@@ -25,11 +27,13 @@ public class Application {
     private String role;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false, columnDefinition = "application_status")
     private ApplicationStatus status = ApplicationStatus.SAVED;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "work_mode", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "work_mode", nullable = false, columnDefinition = "work_mode")
     private WorkMode workMode = WorkMode.HYBRID;
 
     @Column(nullable = false)

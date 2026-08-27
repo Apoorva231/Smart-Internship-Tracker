@@ -54,11 +54,16 @@ public class ApplicationService {
     }
 
     public List<ApplicationResponse> listApplications(String userId, ApplicationStatus status, String search) {
-        List<Application> applications = applicationRepository.searchApplications(
-                userId,
-                status,
-                hasText(search) ? search.trim() : null
-        );
+        String normalizedSearch = hasText(search) ? search.trim() : null;
+
+        List<Application> applications;
+        if (normalizedSearch == null) {
+            applications = status == null
+                    ? applicationRepository.findByUserIdOrderByPriorityAscUpdatedAtDesc(userId)
+                    : applicationRepository.findByUserIdAndStatusOrderByPriorityAscUpdatedAtDesc(userId, status);
+        } else {
+            applications = applicationRepository.searchApplications(userId, status, normalizedSearch);
+        }
 
         return applications.stream()
                 .map(this::toResponse)

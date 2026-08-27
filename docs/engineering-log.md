@@ -264,6 +264,25 @@ Tradeoffs:
 - Controller tests now need valid JWT fixtures for protected happy paths.
 - Security polish still needs a later pass for CORS, production secret handling, route privacy review, and cleaner auth error responses.
 
+## Decision 016: Production-Like Integration Tests With Testcontainers
+
+Date: 2026-08-27
+
+Decision: add backend integration tests that boot the full Spring application against a disposable PostgreSQL database managed by Testcontainers.
+
+Rationale:
+
+- Unit and controller slice tests are fast, but they do not exercise the real PostgreSQL schema, Flyway migrations, Hibernate mappings, or security filter chain together.
+- The first integration flows exposed real persistence issues that mocked tests could not catch: missing user audit timestamp generation, PostgreSQL native enum binding for application status/work mode, and a nullable search parameter that Postgres inferred as the wrong SQL type inside a `lower(...)` query.
+- Using Testcontainers keeps integration tests close to production behavior while avoiding pollution of the local development database.
+- `MockMvc` lets tests send HTTP-style requests through Spring MVC and Spring Security without opening a real network port.
+
+Tradeoffs:
+
+- Integration tests are slower and more operationally noisy than unit tests because they start Docker containers and boot the full Spring context.
+- Docker must be available for developers and CI environments that run these tests.
+- The suite should keep integration tests focused on high-value user flows rather than duplicating every unit-level edge case.
+
 ## Current Backend Status
 
 - Implemented: Spring Boot scaffold, PostgreSQL connection, Flyway migrations, core JPA entities, repositories, Applications CRUD, validation/error handling, companies list endpoint, Tasks CRUD, dashboard insights, auth foundation, JWT issuing for register/login, JWT route protection, and JWT subject-based identity for protected application/task routes.
