@@ -4,6 +4,9 @@
 !.env.example
 
 target/
+node_modules/
+dist/
+*.tsbuildinfo
 *.log
 
 .idea/
