@@ -72,7 +72,8 @@ class ApplicationControllerTest {
     @Test
     void listApplicationsRequiresBearerToken() throws Exception {
         mockMvc.perform(get("/api/applications"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized"));
     }
 
     @Test

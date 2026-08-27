@@ -89,7 +89,8 @@ class TaskControllerTest {
                                   "dueDate": "2026-08-28T12:00:00-04:00"
                                 }
                                 """))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized"));
     }
 
     @Test

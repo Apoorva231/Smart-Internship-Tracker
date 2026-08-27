@@ -15,6 +15,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import tools.jackson.databind.ObjectMapper;
 
 class JwtConfigurationTest {
 
@@ -86,12 +87,12 @@ class JwtConfigurationTest {
 
         @Bean
         JwtDecoder jwtDecoder(JwtProperties properties) {
-            return new SecurityConfig().jwtDecoder(properties);
+            return new SecurityConfig(new ObjectMapper()).jwtDecoder(properties);
         }
 
         @Bean
         CorsConfigurationSource corsConfigurationSource(CorsProperties properties) {
-            return new SecurityConfig().corsConfigurationSource(properties);
+            return new SecurityConfig(new ObjectMapper()).corsConfigurationSource(properties);
         }
     }
 }
