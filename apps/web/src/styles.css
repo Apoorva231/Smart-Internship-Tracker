@@ -582,6 +582,66 @@ button {
   background: #eff6ff;
 }
 
+.task-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 14px;
+}
+
+.task-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.task-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #475569;
+  background: #ffffff;
+  font-weight: 800;
+}
+
+.task-chip.done {
+  color: #64748b;
+  background: #f1f5f9;
+  text-decoration: line-through;
+}
+
+.task-form {
+  display: flex;
+  min-width: 240px;
+  gap: 8px;
+}
+
+.task-form input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px 11px;
+  color: #111827;
+  background: #ffffff;
+  outline: 0;
+}
+
+@media (max-width: 760px) {
+  .task-strip {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .task-form {
+    min-width: 0;
+  }
+}
+
 .icon-button.danger {
   color: #b91c1c;
 }

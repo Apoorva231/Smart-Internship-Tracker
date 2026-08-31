@@ -6,7 +6,8 @@ import type {
   ApplicationPayload,
   ApplicationStatus,
   Company,
-  Insights
+  Insights,
+  Task
 } from "../api/types";
 import { useAuth } from "../features/auth/AuthContext";
 import { ApplicationForm, statusLabel } from "./ApplicationForm";
@@ -91,6 +92,24 @@ export function Dashboard() {
     await loadWorkspace();
   }
 
+  async function addTask(application: Application, title: string) {
+    if (!token) {
+      return;
+    }
+
+    await api.createTask(token, application.id, { title });
+    await loadWorkspace();
+  }
+
+  async function toggleTask(task: Task) {
+    if (!token) {
+      return;
+    }
+
+    await api.updateTask(token, task.id, { completed: !task.completed });
+    await loadWorkspace();
+  }
+
   return (
     <main className="dashboard-shell">
       <header className="app-header">
@@ -169,6 +188,8 @@ export function Dashboard() {
               applications={applications}
               onStatusChange={updateStatus}
               onDelete={deleteApplication}
+              onAddTask={addTask}
+              onToggleTask={toggleTask}
             />
           )}
         </section>
