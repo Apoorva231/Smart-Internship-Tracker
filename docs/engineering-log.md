@@ -291,8 +291,104 @@ Tradeoffs:
 - Docker must be available for developers and CI environments that run these tests.
 - The suite should keep integration tests focused on high-value user flows rather than duplicating every unit-level edge case.
 
-## Current Backend Status
+## Decision 017: React, TypeScript, And Vite Frontend
 
-- Implemented: Spring Boot scaffold, PostgreSQL/Flyway schema, JPA entities and repositories, Applications CRUD, companies list, Tasks CRUD, dashboard insights, validation/error handling, register/login, JWT issuing, JWT route protection, JWT subject-based identity, `GET /api/auth/me`, Testcontainers integration tests, and the API runbook.
-- Backend status: ready for the frontend rebuild.
-- Remaining: frontend rebuild. Minor backend differences from the Node reference can be addressed later if the frontend needs them.
+Date: 2026-08-31
+
+Decision: build the frontend in `apps/web` with React, TypeScript, and Vite.
+
+Rationale:
+
+- React fits the dashboard-style UI because the page is driven by changing state: auth session, filters, applications, task completion, and loading/error states.
+- TypeScript gives the frontend explicit API response and request types, catching mismatches while building instead of only after clicking through the browser.
+- Vite provides a fast development server and a production build pipeline for static frontend assets.
+- Keeping the frontend in `apps/web` preserves the monorepo boundary between the Spring Boot API and the browser app.
+
+Tradeoffs:
+
+- Frontend commands must run from `apps/web` because the repository root is Maven-oriented.
+- TypeScript adds configuration and type-definition files that are not present in a plain React JavaScript app.
+- Vite builds static files, so runtime backend URLs must be supplied through environment variables such as `VITE_API_URL`.
+
+## Decision 018: Frontend API Client And Auth State
+
+Date: 2026-08-31
+
+Decision: centralize browser API calls in `src/api/client.ts` and manage the current JWT-backed session through a React auth provider.
+
+Rationale:
+
+- A shared API client keeps base URL handling, bearer-token headers, JSON parsing, query parameters, and backend error-message extraction in one place.
+- Frontend API types mirror backend response shapes so components know what data they can safely render.
+- `AuthProvider` gives nested components access to the current token, user, loading state, login/register actions, and logout without manually passing those props through every component.
+- The current implementation stores the JWT in `localStorage` for a simple portfolio-ready auth flow while keeping the backend source of identity as the validated JWT subject.
+
+Tradeoffs:
+
+- `localStorage` token storage is simple and easy to understand, but it is not the strongest production session strategy if the app later needs higher security guarantees.
+- The frontend and backend contracts must stay aligned as DTOs evolve.
+- API errors currently show concise messages, but production polish may need richer per-field handling and retry states.
+
+## Decision 019: Dashboard-First Frontend Workflow
+
+Date: 2026-08-31
+
+Decision: make the authenticated dashboard the main frontend experience, with application creation, list rendering, status filters, search, task chips, and upcoming follow-ups on one working screen.
+
+Rationale:
+
+- The app is an operational tracker, so the first authenticated screen should let users add, scan, filter, and act on applications immediately.
+- Dashboard metrics use server-provided insights instead of recomputing every summary in the browser.
+- Application cards keep high-frequency actions close to the record: status changes, delete, job link, and quick follow-up task entry.
+- The upcoming follow-ups panel surfaces dated incomplete tasks as the user's next actionable work.
+
+Tradeoffs:
+
+- A dense single-screen workflow can grow crowded as edit flows and richer task controls are added.
+- The quick task form defaults follow-ups to 9:00 a.m. when the user chooses only a date.
+- The current UI refreshes workspace data after writes, which is simple and consistent but less instant than optimistic updates.
+
+## Decision 020: Frontend Component Tests With Vitest
+
+Date: 2026-08-31
+
+Decision: use Vitest, jsdom, React Testing Library, jest-dom matchers, and user-event for frontend tests.
+
+Rationale:
+
+- Vitest fits naturally with Vite and TypeScript.
+- jsdom provides a browser-like DOM so React components can be tested without opening a real browser.
+- React Testing Library encourages tests that interact with the UI the way a user would: finding text, typing in inputs, and clicking buttons.
+- The first tests cover the frontend API client, application card task/status interactions, and the upcoming follow-ups panel.
+
+Tradeoffs:
+
+- Component tests do not prove the real backend and frontend work together in a browser; backend integration tests cover the API separately for now.
+- jsdom is not a full browser, so layout and visual behavior still need manual or future end-to-end testing.
+- Test data in component tests must be maintained as frontend API types evolve.
+
+## Decision 021: GitHub Actions CI
+
+Date: 2026-08-31
+
+Decision: run backend and frontend verification in GitHub Actions on pushes to `main` and pull requests.
+
+Rationale:
+
+- CI proves the project can install, test, typecheck, and build outside the local machine.
+- The backend job runs Maven tests against Java 21 and includes Testcontainers-backed integration tests.
+- The frontend job installs dependencies from `package-lock.json`, runs Vitest, runs TypeScript checks, and builds production assets.
+- The README badge makes build health visible from the repository landing page.
+
+Tradeoffs:
+
+- Backend CI depends on GitHub runner Docker support for Testcontainers.
+- CI increases feedback time compared with local-only checks.
+- Deployment automation is intentionally separate from CI until hosting targets and environment variable strategy are chosen.
+
+## Current Project Status
+
+- Implemented backend: Spring Boot scaffold, PostgreSQL/Flyway schema, JPA entities and repositories, Applications CRUD, companies list, Tasks CRUD, dashboard insights, validation/error handling, register/login, JWT issuing, JWT route protection, JWT subject-based identity, `GET /api/auth/me`, Testcontainers integration tests, and the API runbook.
+- Implemented frontend: React/Vite/TypeScript scaffold, typed API client, auth flow, dashboard metrics, application creation, application list cards, status changes, delete, filters, search, quick follow-up tasks, and upcoming follow-ups.
+- Implemented verification: backend unit/controller/integration tests, frontend component/API tests, frontend typecheck/build, and GitHub Actions CI.
+- Remaining: frontend polish and edit flows, deployment configuration, production environment hardening, and production logging/monitoring.
