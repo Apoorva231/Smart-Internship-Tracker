@@ -440,3 +440,172 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+.main-column {
+  min-width: 0;
+}
+
+.application-list {
+  display: grid;
+  gap: 14px;
+}
+
+.application-card,
+.empty-state {
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 16px 45px rgb(15 23 42 / 0.07);
+}
+
+.application-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-left-width: 5px;
+}
+
+.application-card.priority-1 {
+  border-left-color: #dc2626;
+}
+
+.application-card.priority-2 {
+  border-left-color: #2563eb;
+}
+
+.application-card.priority-3 {
+  border-left-color: #16a34a;
+}
+
+.application-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.application-main h2 {
+  margin: 8px 0;
+  color: #111827;
+  font-size: 1.35rem;
+}
+
+.status-line,
+.company-line,
+.application-meta,
+.card-actions,
+.status-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-line,
+.application-meta,
+.status-selector {
+  flex-wrap: wrap;
+}
+
+.status-pill,
+.work-mode,
+.application-meta span {
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: #475569;
+  background: #f1f5f9;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.status-pill.saved {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.status-pill.applied,
+.status-pill.interview,
+.status-pill.technical {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.status-pill.offer {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.status-pill.rejected,
+.status-pill.archived {
+  color: #64748b;
+  background: #e2e8f0;
+}
+
+.company-line {
+  flex-wrap: wrap;
+  color: #64748b;
+}
+
+.company-line strong {
+  color: #334155;
+}
+
+.company-line span,
+.application-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.application-meta {
+  color: #64748b;
+}
+
+.notes {
+  margin: 0;
+  border-left: 3px solid #dbeafe;
+  padding-left: 10px;
+  color: #475569;
+}
+
+.status-selector button {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #475569;
+  background: #ffffff;
+  font-weight: 800;
+}
+
+.status-selector button.active {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.icon-button.danger {
+  color: #b91c1c;
+}
+
+.empty-state {
+  display: grid;
+  min-height: 280px;
+  place-items: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.empty-state h2 {
+  margin: 0;
+  color: #111827;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #64748b;
+}
+
+@media (max-width: 640px) {
+  .application-main {
+    flex-direction: column;
+  }
+}

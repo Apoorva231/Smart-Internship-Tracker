@@ -1,9 +1,16 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { BriefcaseBusiness, CalendarDays, LogOut, Target, Trophy } from "lucide-react";
 import { api } from "../api/client";
-import type { Application, ApplicationPayload, Company, Insights } from "../api/types";
+import type {
+  Application,
+  ApplicationPayload,
+  ApplicationStatus,
+  Company,
+  Insights
+} from "../api/types";
 import { useAuth } from "../features/auth/AuthContext";
 import { ApplicationForm } from "./ApplicationForm";
+import { ApplicationList } from "./ApplicationList";
 
 export function Dashboard() {
   const { token, user, logout } = useAuth();
@@ -51,6 +58,24 @@ export function Dashboard() {
     await loadWorkspace();
   }
 
+  async function updateStatus(application: Application, nextStatus: ApplicationStatus) {
+    if (!token || application.status === nextStatus) {
+      return;
+    }
+
+    await api.updateApplication(token, application.id, { status: nextStatus });
+    await loadWorkspace();
+  }
+
+  async function deleteApplication(application: Application) {
+    if (!token) {
+      return;
+    }
+
+    await api.deleteApplication(token, application.id);
+    await loadWorkspace();
+  }
+
   return (
     <main className="dashboard-shell">
       <header className="app-header">
@@ -83,8 +108,8 @@ export function Dashboard() {
         <Metric icon={<Trophy size={20} />} label="Offers" value={insights?.metrics.offers ?? 0} />
         <Metric
           icon={<BriefcaseBusiness size={20} />}
-          label="Companies"
-          value={companies.length}
+          label="High priority"
+          value={insights?.metrics.highPriority ?? 0}
         />
       </section>
 
@@ -95,14 +120,17 @@ export function Dashboard() {
           <ApplicationForm companies={companies} onCreate={createApplication} />
         </aside>
 
-        <section className="dashboard-placeholder">
+        <section className="main-column">
           {isLoading ? (
-            <p>Refreshing tracker</p>
+            <section className="dashboard-placeholder">
+              <p>Refreshing tracker</p>
+            </section>
           ) : (
-            <>
-              <h2>{applications.length} applications loaded</h2>
-              <p>Create an application from the form, then we will render the list next.</p>
-            </>
+            <ApplicationList
+              applications={applications}
+              onStatusChange={updateStatus}
+              onDelete={deleteApplication}
+            />
           )}
         </section>
       </section>
