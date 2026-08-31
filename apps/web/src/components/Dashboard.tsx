@@ -1,8 +1,9 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { BriefcaseBusiness, CalendarDays, LogOut, Target, Trophy } from "lucide-react";
 import { api } from "../api/client";
-import type { Application, Company, Insights } from "../api/types";
+import type { Application, ApplicationPayload, Company, Insights } from "../api/types";
 import { useAuth } from "../features/auth/AuthContext";
+import { ApplicationForm } from "./ApplicationForm";
 
 export function Dashboard() {
   const { token, user, logout } = useAuth();
@@ -40,6 +41,15 @@ export function Dashboard() {
   useEffect(() => {
     void loadWorkspace();
   }, [loadWorkspace]);
+
+  async function createApplication(payload: ApplicationPayload) {
+    if (!token) {
+      return;
+    }
+
+    await api.createApplication(token, payload);
+    await loadWorkspace();
+  }
 
   return (
     <main className="dashboard-shell">
@@ -80,15 +90,21 @@ export function Dashboard() {
 
       {error ? <p className="form-error">{error}</p> : null}
 
-      <section className="dashboard-placeholder">
-        {isLoading ? (
-          <p>Refreshing tracker</p>
-        ) : (
-          <>
-            <h2>{applications.length} applications loaded</h2>
-            <p>Dashboard data is connected. Application management comes next.</p>
-          </>
-        )}
+      <section className="workspace-layout">
+        <aside className="left-rail">
+          <ApplicationForm companies={companies} onCreate={createApplication} />
+        </aside>
+
+        <section className="dashboard-placeholder">
+          {isLoading ? (
+            <p>Refreshing tracker</p>
+          ) : (
+            <>
+              <h2>{applications.length} applications loaded</h2>
+              <p>Create an application from the form, then we will render the list next.</p>
+            </>
+          )}
+        </section>
       </section>
     </main>
   );
