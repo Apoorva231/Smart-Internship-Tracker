@@ -65,6 +65,209 @@ Production requirements:
 
 Spring Boot uses port `8080` by default unless `server.port` is configured.
 
+## Current Deployment
+
+The current portfolio deployment uses:
+
+- Frontend: Vercel at `https://smart-internship-tracker-ebon.vercel.app`
+- Backend HTTPS proxy: Caddy at `https://3-21-242-207.sslip.io`
+- Backend API container: `smart-api` on a private Docker network
+- Backend image: `smart-internship-tracker-api:latest`
+- Database: Neon Postgres
+- EC2 host OS: Amazon Linux 2023
+
+Request path:
+
+```text
+Browser
+  -> Vercel frontend
+  -> https://3-21-242-207.sslip.io/api/...
+  -> Caddy container
+  -> smart-api:8080
+  -> Neon Postgres
+```
+
+The `sslip.io` hostname maps the EC2 public IPv4 address into DNS. If the EC2 public IP changes, update the Caddyfile hostname, Vercel `VITE_API_URL`, and backend CORS origin as needed. An Elastic IP or custom domain should replace this before treating the deployment as stable.
+
+## Production Environment File
+
+On EC2, production runtime configuration is stored outside Git:
+
+```text
+~/smart-api.env
+```
+
+Template:
+
+```env
+SPRING_PROFILES_ACTIVE=prod
+DATABASE_URL=jdbc:postgresql://<neon-host>/<database>?sslmode=require&channelBinding=require
+DATABASE_USERNAME=<neon-role>
+DATABASE_PASSWORD=<neon-password>
+JWT_SECRET=<long-random-secret>
+JWT_EXPIRATION_MINUTES=60
+CORS_ALLOWED_ORIGINS=http://3.21.242.207,http://localhost:5173,https://smart-internship-tracker-ebon.vercel.app
+```
+
+Do not commit this file. It contains database credentials and the JWT signing secret.
+
+Generate a JWT secret on the EC2 host:
+
+```bash
+openssl rand -hex 32
+```
+
+Restrict the env file so only the EC2 user can read/write it:
+
+```bash
+chmod 600 ~/smart-api.env
+```
+
+## Backend Docker Image
+
+Build the backend image from the repository root:
+
+```bash
+sudo docker build -t smart-internship-tracker-api:latest apps/api
+```
+
+The Dockerfile is multi-stage:
+
+- Build stage: Maven and JDK compile the app and create the executable Spring Boot jar.
+- Runtime stage: JRE-only image runs `java -jar app.jar` as the non-root `appuser`.
+
+If building on a `t3.micro`, add swap first to reduce memory-related build failures:
+
+```bash
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+free -h
+```
+
+## Docker Network
+
+Create the private network used by Caddy and the API container:
+
+```bash
+sudo docker network create smart-net
+```
+
+Containers attached to the same Docker network can reach each other by container name. Caddy reaches the API at:
+
+```text
+smart-api:8080
+```
+
+## Run The API Container
+
+Start the API container without exposing it directly to the internet:
+
+```bash
+sudo docker run -d \
+  --name smart-api \
+  --network smart-net \
+  --env-file ~/smart-api.env \
+  --restart unless-stopped \
+  smart-internship-tracker-api:latest
+```
+
+Useful API container commands:
+
+```bash
+sudo docker ps
+sudo docker logs --tail=100 smart-api
+sudo docker stop smart-api
+sudo docker rm smart-api
+```
+
+## Caddy HTTPS Proxy
+
+Caddy handles public HTTPS and forwards traffic to the API container over the private Docker network.
+
+Create `~/Caddyfile`:
+
+```text
+3-21-242-207.sslip.io {
+    reverse_proxy smart-api:8080
+}
+```
+
+Start Caddy:
+
+```bash
+sudo docker run -d \
+  --name caddy \
+  --network smart-net \
+  -p 80:80 \
+  -p 443:443 \
+  -v ~/Caddyfile:/etc/caddy/Caddyfile:ro \
+  -v caddy_data:/data \
+  -v caddy_config:/config \
+  --restart unless-stopped \
+  caddy:2
+```
+
+The `caddy_data` and `caddy_config` Docker volumes preserve certificate and config state across container restarts.
+
+Useful Caddy commands:
+
+```bash
+sudo docker logs --tail=100 caddy
+sudo docker restart caddy
+```
+
+## Health Checks
+
+From the EC2 host, verify the API container through Caddy:
+
+```bash
+curl https://3-21-242-207.sslip.io/api/health
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+From a browser, verify:
+
+```text
+https://3-21-242-207.sslip.io/api/health
+```
+
+Then verify the full app through Vercel:
+
+```text
+https://smart-internship-tracker-ebon.vercel.app
+```
+
+Create an account, add an application, reload the page, sign out, and sign back in. Persistence after reload/login confirms the path from Vercel to Caddy to Spring Boot to Neon is working.
+
+## Manual Backend Redeploy
+
+Current manual redeploy process on EC2:
+
+```bash
+cd ~/Smart-Internship-Tracker
+git pull
+sudo docker build -t smart-internship-tracker-api:latest apps/api
+sudo docker stop smart-api
+sudo docker rm smart-api
+sudo docker run -d \
+  --name smart-api \
+  --network smart-net \
+  --env-file ~/smart-api.env \
+  --restart unless-stopped \
+  smart-internship-tracker-api:latest
+sudo docker logs --tail=100 smart-api
+curl https://3-21-242-207.sslip.io/api/health
+```
+
+This should eventually move to Docker Compose or CI/CD so deployment is less manual.
+
 ## Authentication Flow
 
 Registration creates a user and returns a JWT, so a newly registered user can be treated as logged in by the frontend.

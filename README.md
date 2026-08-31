@@ -4,7 +4,12 @@
 
 Smart Internship Tracker is a full-stack application for managing internship applications, companies, follow-up tasks, and dashboard insights.
 
-The repository is organized as a monorepo with a Spring Boot API and a React frontend.
+The repository is organized as a monorepo with a Spring Boot API, a React frontend, and deployment documentation.
+
+Live demo:
+
+- Frontend: https://smart-internship-tracker-ebon.vercel.app
+- Backend health check: https://3-21-242-207.sslip.io/api/health
 
 ## Project Structure
 
@@ -30,16 +35,44 @@ docs/     Architecture notes and engineering decisions
 - React frontend in `apps/web` with auth, dashboard metrics, application management, task chips, and upcoming follow-ups
 - Frontend tests with Vitest and React Testing Library
 - GitHub Actions CI for backend and frontend checks
+- Docker packaging for the backend API
+- Student-cost deployment using Vercel, AWS EC2, Caddy, and Neon Postgres
 
-## Planned Work
+## Deployment Architecture
 
-- Frontend polish and edit flows
-- Deployment configuration
-- Production logging and monitoring
+```text
+Browser
+  -> Vercel-hosted React app
+  -> HTTPS API request to Caddy on EC2
+  -> Spring Boot API Docker container
+  -> Neon Postgres
+```
+
+Current production-like deployment:
+
+- Frontend hosting: Vercel Hobby project rooted at `apps/web`
+- Backend host: AWS EC2 `t3.micro` running Amazon Linux 2023
+- Backend runtime: Docker container built from `apps/api/Dockerfile`
+- HTTPS reverse proxy: Caddy container with automatic TLS
+- Database: Neon Postgres production branch
+- API base URL for the frontend: `VITE_API_URL=https://3-21-242-207.sslip.io/api`
+
+The current backend hostname is tied to the EC2 public IPv4 address through `sslip.io`. If the EC2 instance is stopped and started, the public IP may change until an Elastic IP or custom domain is configured.
+
+## Production Hardening Still Needed
+
+- Attach an Elastic IP or custom domain so the backend URL is stable.
+- Move manual EC2 Docker commands into Docker Compose or a small deploy script.
+- Add uptime monitoring and clearer log retention.
+- Create an IAM admin user/role for daily AWS work instead of using the root account.
+- Add backend CI/CD so GitHub Actions can build and deploy the container image.
+- Consider stronger auth/session storage if the app moves beyond portfolio/demo usage.
 
 ## Engineering Notes
 
 See [docs/engineering-log.md](docs/engineering-log.md).
+
+Operational API notes live in [docs/api-runbook.md](docs/api-runbook.md).
 
 ## Development Workflow
 
@@ -77,6 +110,12 @@ http://localhost:8080/api
 ```
 
 Override that with `VITE_API_URL` in `apps/web/.env`.
+
+For the deployed backend, use:
+
+```text
+VITE_API_URL=https://3-21-242-207.sslip.io/api
+```
 
 ## Local Database
 
@@ -156,3 +195,31 @@ The CI workflow runs:
 - `npm run test` in `apps/web`
 - `npm run typecheck` in `apps/web`
 - `npm run build` in `apps/web`
+
+## Deployment Notes
+
+Backend deployment currently happens manually on the EC2 instance:
+
+```bash
+git pull
+sudo docker build -t smart-internship-tracker-api:latest apps/api
+sudo docker stop smart-api
+sudo docker rm smart-api
+sudo docker run -d \
+  --name smart-api \
+  --network smart-net \
+  --env-file ~/smart-api.env \
+  --restart unless-stopped \
+  smart-internship-tracker-api:latest
+```
+
+The backend environment file lives on the EC2 instance at `~/smart-api.env` and must not be committed. It contains production values for `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `JWT_SECRET`, and `CORS_ALLOWED_ORIGINS`.
+
+Frontend deployment happens through Vercel from the same GitHub repository with:
+
+```text
+Root Directory: apps/web
+Build Command: npm run build
+Output Directory: dist
+Install Command: npm install
+```

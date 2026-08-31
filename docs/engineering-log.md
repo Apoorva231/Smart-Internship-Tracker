@@ -386,9 +386,87 @@ Tradeoffs:
 - CI increases feedback time compared with local-only checks.
 - Deployment automation is intentionally separate from CI until hosting targets and environment variable strategy are chosen.
 
+## Decision 022: Backend Docker Packaging
+
+Date: 2026-08-31
+
+Decision: package the Spring Boot API with a multi-stage Dockerfile in `apps/api`.
+
+Rationale:
+
+- The build stage uses `maven:3.9-eclipse-temurin-21` so Maven and a JDK are available to compile the API and produce the executable Spring Boot jar.
+- The runtime stage uses `eclipse-temurin:21-jre` so the production image contains only the Java runtime and packaged application, not Maven or source build tools.
+- The container runs as a non-root `appuser`, limiting the damage a compromised process could do inside the container.
+- Docker gives the EC2 host a predictable runtime shape: install Docker once, then run the same image repeatedly.
+
+Tradeoffs:
+
+- Building the image on a small EC2 instance can be memory constrained, so swap may be needed until CI/CD builds images elsewhere.
+- The current image is built manually on EC2 rather than being published to a registry.
+- The image does not contain secrets; production configuration must be supplied through environment variables at container startup.
+
+## Decision 023: Student-Cost Hosting Strategy
+
+Date: 2026-08-31
+
+Decision: deploy the database to Neon, the backend to a small AWS EC2 instance, and the frontend to Vercel.
+
+Rationale:
+
+- Neon gives the project a managed Postgres database without the cost and maintenance risk of running RDS for an early student portfolio deployment.
+- EC2 provides direct learning value for AWS fundamentals: instances, SSH keys, security groups, public IPs, Linux package management, Docker, and service operation.
+- Vercel is a good fit for a Vite frontend because it builds static assets from `apps/web` and serves them globally with minimal setup.
+- Keeping the architecture simple makes the first production-like deployment understandable end to end.
+
+Tradeoffs:
+
+- EC2 requires manual server care: package updates, Docker operation, logs, and redeploys.
+- The current backend hostname depends on the EC2 public IPv4 address until an Elastic IP or custom domain is configured.
+- Neon and Vercel are outside AWS, so this is not a single-cloud architecture.
+- This deployment is appropriate for a portfolio/demo app, not yet for a high-availability production service.
+
+## Decision 024: Caddy Reverse Proxy For HTTPS
+
+Date: 2026-08-31
+
+Decision: run Caddy in Docker as a reverse proxy in front of the Spring Boot API container.
+
+Rationale:
+
+- Browsers block many HTTPS frontend to HTTP backend calls as mixed content, so the public API needs HTTPS before connecting the Vercel frontend.
+- Caddy can automatically obtain and renew TLS certificates for a hostname.
+- The Spring Boot app can continue serving plain HTTP on port `8080` inside a private Docker network, while Caddy handles public HTTP/HTTPS traffic on ports `80` and `443`.
+- A free `sslip.io` hostname maps the EC2 public IP to a DNS name, allowing HTTPS without buying a domain during the learning phase.
+
+Tradeoffs:
+
+- `sslip.io` is convenient for learning but is not a substitute for a durable custom domain.
+- Caddy and the API are currently managed with manual Docker commands.
+- The backend security group must expose ports `80` and `443` publicly, while keeping SSH restricted to a known IP.
+
+## Decision 025: Vercel Frontend Deployment
+
+Date: 2026-08-31
+
+Decision: deploy the React/Vite frontend to Vercel from the `apps/web` root directory.
+
+Rationale:
+
+- The frontend is a Vite static build, so Vercel can build with `npm run build` and serve the generated `dist` directory.
+- The monorepo root is Maven-oriented, so Vercel must use `apps/web` as the project root.
+- The deployed API URL is injected at build time with `VITE_API_URL`.
+- Keeping the frontend deployment separate from the backend helps each side use the simplest hosting model for its runtime.
+
+Tradeoffs:
+
+- Vite environment variables are bundled into browser JavaScript, so only public frontend configuration belongs in `VITE_*` values.
+- Backend CORS must include the deployed Vercel origin exactly, with scheme and host but no trailing slash.
+- Changing the backend hostname requires updating Vercel's `VITE_API_URL` and redeploying the frontend.
+
 ## Current Project Status
 
-- Implemented backend: Spring Boot scaffold, PostgreSQL/Flyway schema, JPA entities and repositories, Applications CRUD, companies list, Tasks CRUD, dashboard insights, validation/error handling, register/login, JWT issuing, JWT route protection, JWT subject-based identity, `GET /api/auth/me`, Testcontainers integration tests, and the API runbook.
-- Implemented frontend: React/Vite/TypeScript scaffold, typed API client, auth flow, dashboard metrics, application creation, application list cards, status changes, delete, filters, search, quick follow-up tasks, and upcoming follow-ups.
+- Implemented backend: Spring Boot scaffold, PostgreSQL/Flyway schema, JPA entities and repositories, Applications CRUD, companies list, Tasks CRUD, dashboard insights, validation/error handling, register/login, JWT issuing, JWT route protection, JWT subject-based identity, `GET /api/auth/me`, Testcontainers integration tests, Docker packaging, and the API runbook.
+- Implemented frontend: React/Vite/TypeScript scaffold, typed API client, auth flow, dashboard metrics, application creation, application list cards, status changes, delete, filters, search, quick follow-up tasks, upcoming follow-ups, and Vercel deployment.
 - Implemented verification: backend unit/controller/integration tests, frontend component/API tests, frontend typecheck/build, and GitHub Actions CI.
-- Remaining: frontend polish and edit flows, deployment configuration, production environment hardening, and production logging/monitoring.
+- Implemented deployment: Neon Postgres, AWS EC2 `t3.micro`, Dockerized Spring Boot API, Caddy HTTPS reverse proxy, and Vercel-hosted frontend.
+- Remaining: Elastic IP or custom domain, Docker Compose/deploy automation, production logging/monitoring, AWS IAM daily-use hardening, and future CI/CD for backend deployment.
