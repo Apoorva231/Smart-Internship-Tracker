@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
-import { BriefcaseBusiness, CalendarDays, LogOut, Target, Trophy } from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, LogOut, Search, Target, Trophy } from "lucide-react";
 import { api } from "../api/client";
 import type {
   Application,
@@ -9,14 +9,26 @@ import type {
   Insights
 } from "../api/types";
 import { useAuth } from "../features/auth/AuthContext";
-import { ApplicationForm } from "./ApplicationForm";
+import { ApplicationForm, statusLabel } from "./ApplicationForm";
 import { ApplicationList } from "./ApplicationList";
+
+const statusFilters: Array<ApplicationStatus | "ALL"> = [
+  "ALL",
+  "SAVED",
+  "APPLIED",
+  "INTERVIEW",
+  "TECHNICAL",
+  "OFFER",
+  "REJECTED"
+];
 
 export function Dashboard() {
   const { token, user, logout } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [insights, setInsights] = useState<Insights | null>(null);
+  const [status, setStatus] = useState<ApplicationStatus | "ALL">("ALL");
+  const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,7 +42,10 @@ export function Dashboard() {
 
     try {
       const [applicationResult, companyResult, insightResult] = await Promise.all([
-        api.applications(token),
+        api.applications(token, {
+          status: status === "ALL" ? undefined : status,
+          search: search || undefined
+        }),
         api.companies(token),
         api.insights(token)
       ]);
@@ -43,7 +58,7 @@ export function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [search, status, token]);
 
   useEffect(() => {
     void loadWorkspace();
@@ -121,6 +136,30 @@ export function Dashboard() {
         </aside>
 
         <section className="main-column">
+          <div className="controls-row">
+            <div className="search-box">
+              <Search size={17} />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search roles, companies, locations"
+              />
+            </div>
+
+            <div className="filter-tabs" aria-label="Status filter">
+              {statusFilters.map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  className={status === filter ? "active" : ""}
+                  onClick={() => setStatus(filter)}
+                >
+                  {filter === "ALL" ? "All" : statusLabel(filter)}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {isLoading ? (
             <section className="dashboard-placeholder">
               <p>Refreshing tracker</p>

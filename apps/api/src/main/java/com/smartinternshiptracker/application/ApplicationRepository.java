@@ -19,16 +19,32 @@ public interface ApplicationRepository extends JpaRepository<Application, String
             from Application application
             join application.company company
             where application.user.id = :userId
-              and (:status is null or application.status = :status)
               and (
-                  :search is null
-                  or lower(application.role) like lower(concat('%', :search, '%'))
+                  lower(application.role) like lower(concat('%', :search, '%'))
                   or lower(company.name) like lower(concat('%', :search, '%'))
                   or lower(company.location) like lower(concat('%', :search, '%'))
               )
             order by application.priority asc, application.updatedAt desc
             """)
     List<Application> searchApplications(
+            @Param("userId") String userId,
+            @Param("search") String search
+    );
+
+    @Query("""
+            select application
+            from Application application
+            join application.company company
+            where application.user.id = :userId
+              and application.status = :status
+              and (
+                  lower(application.role) like lower(concat('%', :search, '%'))
+                  or lower(company.name) like lower(concat('%', :search, '%'))
+                  or lower(company.location) like lower(concat('%', :search, '%'))
+              )
+            order by application.priority asc, application.updatedAt desc
+            """)
+    List<Application> searchApplicationsByStatus(
             @Param("userId") String userId,
             @Param("status") ApplicationStatus status,
             @Param("search") String search

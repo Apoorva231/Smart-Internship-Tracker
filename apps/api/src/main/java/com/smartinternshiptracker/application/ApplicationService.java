@@ -62,7 +62,9 @@ public class ApplicationService {
                     ? applicationRepository.findByUserIdOrderByPriorityAscUpdatedAtDesc(userId)
                     : applicationRepository.findByUserIdAndStatusOrderByPriorityAscUpdatedAtDesc(userId, status);
         } else {
-            applications = applicationRepository.searchApplications(userId, status, normalizedSearch);
+            applications = status == null
+                    ? applicationRepository.searchApplications(userId, normalizedSearch)
+                    : applicationRepository.searchApplicationsByStatus(userId, status, normalizedSearch);
         }
 
         return applications.stream()

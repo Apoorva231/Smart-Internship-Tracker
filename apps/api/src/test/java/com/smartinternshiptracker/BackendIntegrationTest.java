@@ -236,6 +236,54 @@ class BackendIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void searchesApplicationsWithAndWithoutStatusFilter() throws Exception {
+        String token = registerAndLogin("search@example.com");
+
+        mockMvc.perform(post("/api/applications")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "role": "Data Engineer Intern",
+                                  "companyName": "Pratt and Whitney",
+                                  "companyLocation": "Montreal, QC",
+                                  "status": "INTERVIEW",
+                                  "priority": 2
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/applications")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "role": "Frontend Intern",
+                                  "companyName": "Lightspeed",
+                                  "companyLocation": "Montreal, QC",
+                                  "status": "SAVED",
+                                  "priority": 2
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/applications")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .param("search", "pra"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.applications.length()").value(1))
+                .andExpect(jsonPath("$.applications[0].company.name").value("Pratt and Whitney"));
+
+        mockMvc.perform(get("/api/applications")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .param("status", "INTERVIEW")
+                        .param("search", "pra"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.applications.length()").value(1))
+                .andExpect(jsonPath("$.applications[0].status").value("INTERVIEW"));
+    }
+
+    @Test
     void companiesEndpointRequiresJwtAndWorksWithJwt() throws Exception {
         mockMvc.perform(get("/api/companies"))
                 .andExpect(status().isUnauthorized())
