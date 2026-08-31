@@ -12,6 +12,7 @@ import type {
 import { useAuth } from "../features/auth/AuthContext";
 import { ApplicationForm, statusLabel } from "./ApplicationForm";
 import { ApplicationList } from "./ApplicationList";
+import { UpcomingTasks } from "./UpcomingTasks";
 
 const statusFilters: Array<ApplicationStatus | "ALL"> = [
   "ALL",
@@ -92,12 +93,12 @@ export function Dashboard() {
     await loadWorkspace();
   }
 
-  async function addTask(application: Application, title: string) {
+  async function addTask(application: Application, title: string, dueDate?: string) {
     if (!token) {
       return;
     }
 
-    await api.createTask(token, application.id, { title });
+    await api.createTask(token, application.id, { title, dueDate });
     await loadWorkspace();
   }
 
@@ -146,6 +147,8 @@ export function Dashboard() {
           value={insights?.metrics.highPriority ?? 0}
         />
       </section>
+
+      {insights ? <UpcomingTasks tasks={insights.upcomingTasks} onToggleTask={toggleTask} /> : null}
 
       {error ? <p className="form-error">{error}</p> : null}
 

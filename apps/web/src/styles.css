@@ -351,6 +351,130 @@ button {
   font-size: 1.8rem;
 }
 
+.followup-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.followup-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.followup-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.2rem;
+}
+
+.followup-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #334155;
+  background: #ffffff;
+  font-weight: 800;
+}
+
+.followup-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.followup-item,
+.followup-empty {
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 12px 35px rgb(15 23 42 / 0.06);
+}
+
+.followup-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+}
+
+.followup-check {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.followup-copy {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.followup-title-row,
+.followup-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.followup-title-row h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.followup-copy p {
+  margin: 0;
+  color: #334155;
+  font-weight: 700;
+}
+
+.followup-meta {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.followup-due {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: #475569;
+  background: #f1f5f9;
+  font-weight: 800;
+}
+
+.followup-due.soon {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.followup-due.overdue {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.followup-empty {
+  margin: 0;
+  padding: 16px;
+  color: #64748b;
+  font-weight: 700;
+}
+
 @media (max-width: 860px) {
   .app-header {
     align-items: flex-start;
@@ -617,7 +741,14 @@ button {
 
 .task-form {
   display: flex;
-  min-width: 240px;
+  min-width: 380px;
+  gap: 8px;
+}
+
+.task-form-fields {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 144px;
+  min-width: 0;
   gap: 8px;
 }
 
@@ -639,6 +770,10 @@ button {
 
   .task-form {
     min-width: 0;
+  }
+
+  .task-form-fields {
+    grid-template-columns: 1fr;
   }
 }
 

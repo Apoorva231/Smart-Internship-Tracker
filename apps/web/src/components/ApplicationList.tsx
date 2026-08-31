@@ -15,7 +15,7 @@ type Props = {
   applications: Application[];
   onStatusChange: (application: Application, status: ApplicationStatus) => Promise<void>;
   onDelete: (application: Application) => Promise<void>;
-  onAddTask: (application: Application, title: string) => Promise<void>;
+  onAddTask: (application: Application, title: string, dueDate?: string) => Promise<void>;
   onToggleTask: (task: Task) => Promise<void>;
 };
 
@@ -74,6 +74,7 @@ function ApplicationCard({
   onToggleTask
 }: ApplicationCardProps) {
   const [taskTitle, setTaskTitle] = useState("");
+  const [taskDueDate, setTaskDueDate] = useState("");
   const dueDate = application.deadline ? formatDate(application.deadline) : "No deadline";
 
   async function handleTaskSubmit(event: FormEvent<HTMLFormElement>) {
@@ -83,8 +84,13 @@ function ApplicationCard({
       return;
     }
 
-    await onAddTask(application, taskTitle.trim());
+    await onAddTask(
+      application,
+      taskTitle.trim(),
+      taskDueDate ? toOffsetDateTime(taskDueDate) : undefined
+    );
     setTaskTitle("");
+    setTaskDueDate("");
   }
 
   return (
@@ -164,11 +170,19 @@ function ApplicationCard({
         </div>
 
         <form className="task-form" onSubmit={handleTaskSubmit}>
-          <input
-            value={taskTitle}
-            onChange={(event) => setTaskTitle(event.target.value)}
-            placeholder="Add follow-up"
-          />
+          <div className="task-form-fields">
+            <input
+              value={taskTitle}
+              onChange={(event) => setTaskTitle(event.target.value)}
+              placeholder="Add follow-up"
+            />
+            <input
+              aria-label="Follow-up due date"
+              type="date"
+              value={taskDueDate}
+              onChange={(event) => setTaskDueDate(event.target.value)}
+            />
+          </div>
           <button className="icon-button" type="submit">
             <Plus size={16} />
             <span className="sr-only">Add task</span>
@@ -185,4 +199,14 @@ function formatDate(value: string) {
     day: "numeric",
     year: "numeric"
   }).format(new Date(value));
+}
+
+function toOffsetDateTime(value: string) {
+  const date = new Date(`${value}T09:00:00`);
+  const offsetInMinutes = -date.getTimezoneOffset();
+  const sign = offsetInMinutes >= 0 ? "+" : "-";
+  const hours = String(Math.floor(Math.abs(offsetInMinutes) / 60)).padStart(2, "0");
+  const minutes = String(Math.abs(offsetInMinutes) % 60).padStart(2, "0");
+
+  return `${value}T09:00:00${sign}${hours}:${minutes}`;
 }
