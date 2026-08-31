@@ -1,15 +1,17 @@
 # Smart Internship Tracker
 
+[![CI](https://github.com/Apoorva231/Smart-Internship-Tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Apoorva231/Smart-Internship-Tracker/actions/workflows/ci.yml)
+
 Smart Internship Tracker is a full-stack application for managing internship applications, companies, follow-up tasks, and dashboard insights.
 
-The repository is organized as a monorepo with a Spring Boot API and a reserved React frontend workspace.
+The repository is organized as a monorepo with a Spring Boot API and a React frontend.
 
 ## Project Structure
 
 ```text
 apps/
   api/    Spring Boot API
-  web/    Future React frontend
+  web/    React frontend
 docs/     Architecture notes and engineering decisions
 ```
 
@@ -25,13 +27,15 @@ docs/     Architecture notes and engineering decisions
 - Dashboard insights endpoint
 - User registration/login with JWT responses
 - JWT-protected application and task endpoints
-- React frontend workspace in `apps/web`
+- React frontend in `apps/web`
+- Frontend tests with Vitest and React Testing Library
+- GitHub Actions CI for backend and frontend checks
 
 ## Planned Work
 
-- Backend final polish
-- Integration tests and API runbook
-- React frontend
+- Frontend polish and edit flows
+- Deployment configuration
+- Production logging and monitoring
 
 ## Engineering Notes
 
