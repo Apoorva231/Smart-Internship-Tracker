@@ -43,7 +43,7 @@ http://localhost:8080/api
 Current deployed backend:
 
 ```text
-https://3-21-242-207.sslip.io/api
+https://18-222-40-55.sslip.io/api
 ```
 
 Do not put secrets in `VITE_*` variables. Vite bundles these values into browser JavaScript.
@@ -83,7 +83,7 @@ Install Command: npm install
 Production environment variable:
 
 ```text
-VITE_API_URL=https://3-21-242-207.sslip.io/api
+VITE_API_URL=https://18-222-40-55.sslip.io/api
 ```
 
 The Spring Boot API lives in `apps/api`.

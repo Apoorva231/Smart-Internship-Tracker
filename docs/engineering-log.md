@@ -421,7 +421,7 @@ Rationale:
 Tradeoffs:
 
 - EC2 requires manual server care: package updates, Docker operation, logs, and redeploys.
-- The current backend hostname depends on the EC2 public IPv4 address until an Elastic IP or custom domain is configured.
+- AWS public IPv4 addresses have a small ongoing hourly cost, so the deployment should keep only the one attached address it actually uses.
 - Neon and Vercel are outside AWS, so this is not a single-cloud architecture.
 - This deployment is appropriate for a portfolio/demo app, not yet for a high-availability production service.
 
@@ -463,10 +463,28 @@ Tradeoffs:
 - Backend CORS must include the deployed Vercel origin exactly, with scheme and host but no trailing slash.
 - Changing the backend hostname requires updating Vercel's `VITE_API_URL` and redeploying the frontend.
 
+## Decision 026: Elastic IP For Backend Stability
+
+Date: 2026-08-31
+
+Decision: allocate an AWS Elastic IP and associate it with the EC2 backend instance.
+
+Rationale:
+
+- The original EC2 auto-assigned public IP could change when the instance stopped and started.
+- The frontend needs a stable API URL because Vite bakes `VITE_API_URL` into the static build at deployment time.
+- A stable IPv4 address keeps the `sslip.io` backend hostname predictable while avoiding the extra setup of a custom domain during the learning phase.
+
+Tradeoffs:
+
+- AWS charges for public IPv4 addresses, including Elastic IPs, so unused Elastic IPs must be released.
+- Replacing the public IP requires updating Caddy, Vercel's `VITE_API_URL`, and documentation.
+- A custom domain would be cleaner for a polished production launch, but Elastic IP plus `sslip.io` is sufficient for this portfolio deployment.
+
 ## Current Project Status
 
 - Implemented backend: Spring Boot scaffold, PostgreSQL/Flyway schema, JPA entities and repositories, Applications CRUD, companies list, Tasks CRUD, dashboard insights, validation/error handling, register/login, JWT issuing, JWT route protection, JWT subject-based identity, `GET /api/auth/me`, Testcontainers integration tests, Docker packaging, and the API runbook.
 - Implemented frontend: React/Vite/TypeScript scaffold, typed API client, auth flow, dashboard metrics, application creation, application list cards, status changes, delete, filters, search, quick follow-up tasks, upcoming follow-ups, and Vercel deployment.
 - Implemented verification: backend unit/controller/integration tests, frontend component/API tests, frontend typecheck/build, and GitHub Actions CI.
-- Implemented deployment: Neon Postgres, AWS EC2 `t3.micro`, Dockerized Spring Boot API, Caddy HTTPS reverse proxy, and Vercel-hosted frontend.
-- Remaining: Elastic IP or custom domain, Docker Compose/deploy automation, production logging/monitoring, AWS IAM daily-use hardening, and future CI/CD for backend deployment.
+- Implemented deployment: Neon Postgres, AWS EC2 `t3.micro`, Elastic IP, Dockerized Spring Boot API, Caddy HTTPS reverse proxy, and Vercel-hosted frontend.
+- Remaining: custom domain, Docker Compose/deploy automation, production logging/monitoring, AWS IAM daily-use hardening, and future CI/CD for backend deployment.

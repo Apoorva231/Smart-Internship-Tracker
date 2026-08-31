@@ -70,7 +70,8 @@ Spring Boot uses port `8080` by default unless `server.port` is configured.
 The current portfolio deployment uses:
 
 - Frontend: Vercel at `https://smart-internship-tracker-ebon.vercel.app`
-- Backend HTTPS proxy: Caddy at `https://3-21-242-207.sslip.io`
+- Backend HTTPS proxy: Caddy at `https://18-222-40-55.sslip.io`
+- Backend Elastic IP: `18.222.40.55`
 - Backend API container: `smart-api` on a private Docker network
 - Backend image: `smart-internship-tracker-api:latest`
 - Database: Neon Postgres
@@ -81,13 +82,13 @@ Request path:
 ```text
 Browser
   -> Vercel frontend
-  -> https://3-21-242-207.sslip.io/api/...
+  -> https://18-222-40-55.sslip.io/api/...
   -> Caddy container
   -> smart-api:8080
   -> Neon Postgres
 ```
 
-The `sslip.io` hostname maps the EC2 public IPv4 address into DNS. If the EC2 public IP changes, update the Caddyfile hostname, Vercel `VITE_API_URL`, and backend CORS origin as needed. An Elastic IP or custom domain should replace this before treating the deployment as stable.
+The `sslip.io` hostname maps the EC2 Elastic IP address into DNS. If the Elastic IP is replaced, update the Caddyfile hostname, Vercel `VITE_API_URL`, and documentation. Release unused Elastic IPs when they are no longer attached to the backend instance.
 
 ## Production Environment File
 
@@ -106,7 +107,7 @@ DATABASE_USERNAME=<neon-role>
 DATABASE_PASSWORD=<neon-password>
 JWT_SECRET=<long-random-secret>
 JWT_EXPIRATION_MINUTES=60
-CORS_ALLOWED_ORIGINS=http://3.21.242.207,http://localhost:5173,https://smart-internship-tracker-ebon.vercel.app
+CORS_ALLOWED_ORIGINS=http://18.222.40.55,http://localhost:5173,https://smart-internship-tracker-ebon.vercel.app
 ```
 
 Do not commit this file. It contains database credentials and the JWT signing secret.
@@ -189,7 +190,7 @@ Caddy handles public HTTPS and forwards traffic to the API container over the pr
 Create `~/Caddyfile`:
 
 ```text
-3-21-242-207.sslip.io {
+18-222-40-55.sslip.io {
     reverse_proxy smart-api:8080
 }
 ```
@@ -223,7 +224,7 @@ sudo docker restart caddy
 From the EC2 host, verify the API container through Caddy:
 
 ```bash
-curl https://3-21-242-207.sslip.io/api/health
+curl https://18-222-40-55.sslip.io/api/health
 ```
 
 Expected response:
@@ -235,7 +236,7 @@ Expected response:
 From a browser, verify:
 
 ```text
-https://3-21-242-207.sslip.io/api/health
+https://18-222-40-55.sslip.io/api/health
 ```
 
 Then verify the full app through Vercel:
@@ -263,7 +264,7 @@ sudo docker run -d \
   --restart unless-stopped \
   smart-internship-tracker-api:latest
 sudo docker logs --tail=100 smart-api
-curl https://3-21-242-207.sslip.io/api/health
+curl https://18-222-40-55.sslip.io/api/health
 ```
 
 This should eventually move to Docker Compose or CI/CD so deployment is less manual.

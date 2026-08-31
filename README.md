@@ -9,7 +9,7 @@ The repository is organized as a monorepo with a Spring Boot API, a React fronte
 Live demo:
 
 - Frontend: https://smart-internship-tracker-ebon.vercel.app
-- Backend health check: https://3-21-242-207.sslip.io/api/health
+- Backend health check: https://18-222-40-55.sslip.io/api/health
 
 ## Project Structure
 
@@ -55,13 +55,14 @@ Current production-like deployment:
 - Backend runtime: Docker container built from `apps/api/Dockerfile`
 - HTTPS reverse proxy: Caddy container with automatic TLS
 - Database: Neon Postgres production branch
-- API base URL for the frontend: `VITE_API_URL=https://3-21-242-207.sslip.io/api`
+- Stable backend IPv4: `18.222.40.55`
+- API base URL for the frontend: `VITE_API_URL=https://18-222-40-55.sslip.io/api`
 
-The current backend hostname is tied to the EC2 public IPv4 address through `sslip.io`. If the EC2 instance is stopped and started, the public IP may change until an Elastic IP or custom domain is configured.
+The backend uses an AWS Elastic IP so the `sslip.io` hostname remains stable across EC2 stop/start cycles. If the instance is terminated permanently, release the Elastic IP to avoid paying for an unused address.
 
 ## Production Hardening Still Needed
 
-- Attach an Elastic IP or custom domain so the backend URL is stable.
+- Add a custom domain for the backend if the project moves beyond the learning/demo phase.
 - Move manual EC2 Docker commands into Docker Compose or a small deploy script.
 - Add uptime monitoring and clearer log retention.
 - Create an IAM admin user/role for daily AWS work instead of using the root account.
@@ -114,7 +115,7 @@ Override that with `VITE_API_URL` in `apps/web/.env`.
 For the deployed backend, use:
 
 ```text
-VITE_API_URL=https://3-21-242-207.sslip.io/api
+VITE_API_URL=https://18-222-40-55.sslip.io/api
 ```
 
 ## Local Database
